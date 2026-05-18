@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -233,12 +234,13 @@ func (p *xmlParser) loadSubtreeModels(root *xmlNode) error {
 	return nil
 }
 
-// RegisteredTreeNames returns the names of all registered trees.
+// RegisteredTreeNames returns the names of all registered trees in sorted order.
 func (p *xmlParser) RegisteredTreeNames() []string {
 	var names []string
 	for name := range p.treeRoots {
 		names = append(names, name)
 	}
+	sort.Strings(names)
 	return names
 }
 
@@ -827,11 +829,13 @@ func ParseXMLAndCreateTreeFromText(factory *core.BehaviorTreeFactory, xmlText st
 			mainTreeID = name
 		}
 	} else {
-		// Fall back to any tree
+		// Sort tree names for deterministic selection
+		names := make([]string, 0, len(parser.treeRoots))
 		for name := range parser.treeRoots {
-			mainTreeID = name
-			break
+			names = append(names, name)
 		}
+		sort.Strings(names)
+		mainTreeID = names[0]
 	}
 	if mainTreeID == "" {
 		return nil, fmt.Errorf("No BehaviorTree found in XML")
