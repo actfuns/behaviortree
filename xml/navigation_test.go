@@ -1243,7 +1243,7 @@ func TestSubTree_SubtreeNav2_Issue563(t *testing.T) {
 	t.Logf("Issue563 status: %v", status)
 	// Note: The behavior with _autoremap may differ between Go and C++
 	// implementations due to differences in blackboard auto-remapping.
-	}
+}
 
 // ----------------------------------------------------------------
 func TestSubTree_SubtreeNav2_Issue724(t *testing.T) {

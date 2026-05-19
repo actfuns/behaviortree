@@ -243,8 +243,8 @@ func TestBasicTypes_ConvertFromString_PortDirection(t *testing.T) {
 		want PortDirection
 	}{
 		{"INPUT", INPUT},
-			{"OUTPUT", OUTPUT},
-			{"INOUT", INOUT},
+		{"OUTPUT", OUTPUT},
+		{"INOUT", INOUT},
 	}
 	for _, tt := range tests {
 		v, err := ti.ParseString(tt.str)

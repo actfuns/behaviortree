@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/actfuns/behaviortree/action"
-	"github.com/actfuns/behaviortree/core"
 	"github.com/actfuns/behaviortree/control"
+	"github.com/actfuns/behaviortree/core"
 	"github.com/actfuns/behaviortree/decorator"
 	_ "github.com/actfuns/behaviortree/xml"
 )

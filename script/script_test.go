@@ -417,7 +417,7 @@ func TestEquations(t *testing.T) {
 
 	result = mustExec("y == x")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for y==x, got %d", iv)
 	}
 
@@ -442,7 +442,7 @@ func TestEquations(t *testing.T) {
 
 	result = mustExec("'hello' > 'world'")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for 'hello'>'world', got %d", iv)
 	}
 
@@ -502,7 +502,7 @@ func TestEquations(t *testing.T) {
 	// Logical operators
 	result = mustExec("v1 && v2")
 	iv, _ = result.ToInt64()
-		if iv != 1 {
+	if iv != 1 {
 		t.Errorf("Expected 1 for v1Expected 0 for v1&&v2Expected 0 for v1&&v2v2 (after v2=true), got %d", iv)
 	}
 
@@ -515,7 +515,7 @@ func TestEquations(t *testing.T) {
 	// Combined logical with comparisons
 	result = mustExec("(y == x) && (x == 3)")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0, got %d", iv)
 	}
 
@@ -692,13 +692,13 @@ func TestCompareWithNegativeNumber(t *testing.T) {
 
 	result = mustExec("A:=-1; A!=-1")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for 'A:=-1; A!=-1', got %d", iv)
 	}
 
 	result = mustExec("A:=0; A==-1")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for 'A:=0; A==-1', got %d", iv)
 	}
 
@@ -710,7 +710,7 @@ func TestCompareWithNegativeNumber(t *testing.T) {
 
 	result = mustExec("A:=0; A<-1")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for 'A:=0; A<-1', got %d", iv)
 	}
 
@@ -795,7 +795,7 @@ func TestChainedComparisons(t *testing.T) {
 	// 1 < 2 > 3 should be false (1<2 is true, but 2>3 is false)
 	result = mustExec("1 < 2 > 3")
 	iv, _ = result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for '1 < 2 > 3', got %d", iv)
 	}
 
@@ -897,7 +897,7 @@ func TestUnaryOperators(t *testing.T) {
 	// Logical NOT
 	result := mustExec("!true")
 	iv, _ := result.ToInt64()
-				if iv != 0 {
+	if iv != 0 {
 		t.Errorf("Expected 0 for !true, got %d", iv)
 	}
 
@@ -1105,8 +1105,8 @@ func TestEnums_Issue523(t *testing.T) {
 		}
 		return core.SUCCESS
 	}, core.PortsList{
-		"percentage":  core.NewPortInfo(core.INPUT),
-		"deviceType":  core.NewPortInfo(core.INPUT),
+		"percentage":   core.NewPortInfo(core.INPUT),
+		"deviceType":   core.NewPortInfo(core.INPUT),
 		"isLowBattery": core.NewPortInfo(core.OUTPUT),
 	})
 

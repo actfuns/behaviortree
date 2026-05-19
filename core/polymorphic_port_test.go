@@ -48,14 +48,14 @@ type myCat struct {
 	myAnimal
 }
 
-func (m *myCat) IsCat() bool { return true }
+func (m *myCat) IsCat() bool  { return true }
 func (m *myCat) Name() string { return "Cat" }
 
 type myDog struct {
 	myAnimal
 }
 
-func (m *myDog) IsDog() bool { return true }
+func (m *myDog) IsDog() bool  { return true }
 func (m *myDog) Name() string { return "Dog" }
 
 type mySphynx struct {

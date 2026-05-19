@@ -63,16 +63,16 @@ func registerRunningAction(factory *core.BehaviorTreeFactory, id string, finalSt
 	tickCount := 0
 	target := &tickCount
 	_ = factory.RegisterNodeType(id, core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-			n := &runningNode{
-				tickCountPtr: target,
-				runTicks:     runTicks,
-				finalStatus:  finalStatus,
-			}
-			n.Init(name, config)
-			n.SetSelf(n)
-			n.SetRegistrationID(id)
-			return n
-		}, core.Action)
+		n := &runningNode{
+			tickCountPtr: target,
+			runTicks:     runTicks,
+			finalStatus:  finalStatus,
+		}
+		n.Init(name, config)
+		n.SetSelf(n)
+		n.SetRegistrationID(id)
+		return n
+	}, core.Action)
 	return target
 }
 

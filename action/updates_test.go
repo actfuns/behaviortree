@@ -53,7 +53,7 @@ func registerUpdatesTestNodes(factory *core.BehaviorTreeFactory) {
 	}, core.Decorator)
 
 	_ = factory.RegisterNodeType("SubTree", core.PortsList{
-		"name":    core.NewPortInfo(core.INPUT),
+		"name":       core.NewPortInfo(core.INPUT),
 		"_autoremap": core.NewPortInfo(core.INPUT),
 	}, func(name string, config core.NodeConfig) core.TreeNode {
 		n := &updatesSubTreeNode{}
