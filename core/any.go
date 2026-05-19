@@ -136,6 +136,40 @@ func (a Any) CopyInto(dst *Any) error {
 		return nil
 	}
 
+	// numeric → bool: 0/1 converts to false/true (C++ compatible)
+	if a.IsNumber() && dst.IsBool() {
+		f, err := a.ToFloat64()
+		if err != nil {
+			return err
+		}
+		dst.value = f != 0.0
+		return nil
+	}
+
+	// bool → numeric: false/true converts to 0/1 (C++ compatible)
+	if a.IsBool() && dst.IsNumber() {
+		if a.value.(bool) {
+			switch dstCt.Kind() {
+			case reflect.Int64:
+				dst.value = int64(1)
+			case reflect.Float64:
+				dst.value = float64(1)
+			default:
+				return fmt.Errorf("Any::CopyInto: unexpected destination numeric type")
+			}
+		} else {
+			switch dstCt.Kind() {
+			case reflect.Int64:
+				dst.value = int64(0)
+			case reflect.Float64:
+				dst.value = float64(0)
+			default:
+				return fmt.Errorf("Any::CopyInto: unexpected destination numeric type")
+			}
+		}
+		return nil
+	}
+
 	return fmt.Errorf("Any::CopyInto: cannot copy between incompatible types")
 }
 
