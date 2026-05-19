@@ -159,7 +159,7 @@ x > 0 && y < 10
 </BehaviorTree>
 ```
 
-自���重映射：`_autoremap="true"` 自��将同名��段透传到子树。
+自动重映射：`_autoremap="true"` 自动将同名字段透传到子树。
 
 ## 测试
 

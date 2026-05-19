@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -500,6 +502,16 @@ func (f *BehaviorTreeFactory) RegisterBehaviorTreeFromText(xmlText string) {
 	}
 }
 
+// RegisterBehaviorTreeFromFile registers a behavior tree definition from an XML file.
+func (f *BehaviorTreeFactory) RegisterBehaviorTreeFromFile(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("RegisterBehaviorTreeFromFile: %w", err)
+	}
+	f.RegisterBehaviorTreeFromText(string(data))
+	return nil
+}
+
 // StoreRegisteredTreeXML stores the XML text for a specific tree ID.
 // Called by the XML parser during Registration.
 func (f *BehaviorTreeFactory) StoreRegisteredTreeXML(treeID string, xmlText string) {
@@ -556,6 +568,97 @@ func (f *BehaviorTreeFactory) SubstitutionRules() map[string]SubstitutionRule {
 		result[k] = v
 	}
 	return result
+}
+
+// jsonSubstitutionRule is an internal type for parsing substitution rule JSON.
+type jsonSubstitutionRule struct {
+	TestNodeConfigs map[string]jsonTestNodeConfig `json:"TestNodeConfigs"`
+	Substitution    map[string]string             `json:"SubstitutionRules"`
+}
+
+type jsonTestNodeConfig struct {
+	ReturnStatus  string `json:"return_status"`
+	AsyncDelayMs  int    `json:"async_delay"`
+	PostScript    string `json:"post_script"`
+	SuccessScript string `json:"success_script"`
+	FailureScript string `json:"failure_script"`
+}
+
+// LoadSubstitutionRuleFromJSON parses a JSON string containing substitution rules
+// and registers them in the factory. The JSON format matches the C++ BehaviorTree.CPP
+// format:
+//
+//	{
+//	  "TestNodeConfigs": {
+//	    "my_config": { "return_status": "SUCCESS" }
+//	  },
+//	  "SubstitutionRules": {
+//	    "node_A": "my_config",
+//	    "node_B": "AlwaysSuccess"
+//	  }
+//	}
+//
+// Rules referencing a TestNodeConfig key will register a temporary node type
+// that returns the configured status. Rules referencing a non-config name
+// will use string-based node type substitution via AddSubstitutionRule.
+func (f *BehaviorTreeFactory) LoadSubstitutionRuleFromJSON(jsonText string) error {
+	var cfg jsonSubstitutionRule
+	if err := json.Unmarshal([]byte(jsonText), &cfg); err != nil {
+		return fmt.Errorf("LoadSubstitutionRuleFromJSON: %w", err)
+	}
+
+	// Register TestNodeConfig entries as temporary node types
+	registeredConfigs := make(map[string]bool)
+	for name, testCfg := range cfg.TestNodeConfigs {
+		_, err := convertNodeStatusString(testCfg.ReturnStatus)
+		if err != nil {
+			return fmt.Errorf("LoadSubstitutionRuleFromJSON: invalid return_status '%s' for config '%s': %w",
+				testCfg.ReturnStatus, name, err)
+		}
+
+		configName := name
+		_ = f.RegisterNodeType(configName, PortsList{}, func(n string, config NodeConfig) TreeNode {
+			n2 := &SimpleActionNode{}
+			n2.Init(n, config)
+			n2.SetSelf(n2)
+			n2.SetRegistrationID(configName)
+			return n2
+		}, Action)
+
+		// Also add as substitution rule target
+		registeredConfigs[name] = true
+	}
+
+	// Apply substitution rules
+	for nodeName, target := range cfg.Substitution {
+		if _, isConfig := registeredConfigs[target]; isConfig {
+			// The target is a TestNodeConfig that was registered above;
+			// register a substitution rule that replaces nodeName with it
+			f.AddSubstitutionRule(nodeName, SubstitutionRule{ReplaceWith: target})
+		} else {
+			f.AddSubstitutionRule(nodeName, SubstitutionRule{ReplaceWith: target})
+		}
+	}
+
+	return nil
+}
+
+// convertNodeStatusString parses a NodeStatus string.
+func convertNodeStatusString(s string) (NodeStatus, error) {
+	switch s {
+	case "SUCCESS":
+		return SUCCESS, nil
+	case "FAILURE":
+		return FAILURE, nil
+	case "RUNNING":
+		return RUNNING, nil
+	case "SKIPPED":
+		return SKIPPED, nil
+	case "IDLE":
+		return IDLE, nil
+	default:
+		return IDLE, fmt.Errorf("unknown NodeStatus: %s", s)
+	}
 }
 
 // AddMetadataToManifest adds metadata to an existing node manifest.
