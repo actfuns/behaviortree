@@ -1,8 +1,6 @@
 package decorator
 
 import (
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
@@ -12,19 +10,14 @@ import (
 // If timeout is reached, the node returns FAILURE.
 type TimeoutNode struct {
 	core.DecoratorNode
-	msec           int
-	childHalted    atomic.Bool
-	timerID        uint64
-	timer          *core.TimerQueue
-	timeoutStarted atomic.Bool
-	mu             sync.Mutex
+	msec         int
+	startTime    time.Time
+	timerStarted bool
+	childHalted  bool
 }
 
 func NewTimeoutNode(name string, config core.NodeConfig) *TimeoutNode {
-	n := &TimeoutNode{
-		msec:  0,
-		timer: core.NewTimerQueue(),
-	}
+	n := &TimeoutNode{}
 	n.Init(name, config)
 	n.SetSelf(n)
 	return n
@@ -36,48 +29,38 @@ func (n *TimeoutNode) Tick() core.NodeStatus {
 		n.msec = v
 	}
 
-	n.mu.Lock()
-
-	if !n.timeoutStarted.Load() {
-		n.timeoutStarted.Store(true)
+	if !n.timerStarted {
+		n.timerStarted = true
+		n.childHalted = false
+		n.startTime = time.Now()
 		n.SetStatus(core.RUNNING)
-		n.childHalted.Store(false)
+	}
 
-		if n.msec > 0 {
-			n.timerID = n.timer.Add(time.Duration(n.msec)*time.Millisecond, func(aborted bool) {
-				if aborted {
-					return
-				}
-				n.mu.Lock()
-				if n.Child() != nil && n.Child().Status() == core.RUNNING {
-					n.childHalted.Store(true)
-					n.HaltChild()
-					n.EmitWakeUpSignal()
-				}
-				n.mu.Unlock()
-			})
+	// Tick the child first so it can complete
+	childStatus := n.Child().ExecuteTick()
+	if childStatus.IsCompleted() {
+		n.timerStarted = false
+		n.ResetChild()
+		return childStatus
+	}
+
+	// Check timeout after ticking child; if exceeded, halt the child
+	if !n.childHalted && n.msec > 0 {
+		if time.Since(n.startTime) >= time.Duration(n.msec)*time.Millisecond {
+			n.childHalted = true
+			n.HaltChild()
 		}
 	}
 
-	halted := n.childHalted.Load()
-	n.mu.Unlock()
-
-	if halted {
-		n.timeoutStarted.Store(false)
+	if n.childHalted {
+		n.timerStarted = false
 		return core.FAILURE
 	}
 
-	childStatus := n.Child().ExecuteTick()
-	if childStatus.IsCompleted() {
-		n.timeoutStarted.Store(false)
-		n.timer.Cancel(n.timerID)
-		n.ResetChild()
-	}
 	return childStatus
 }
 
 func (n *TimeoutNode) Halt() {
-	n.timeoutStarted.Store(false)
-	n.timer.CancelAll()
+	n.timerStarted = false
 	n.DecoratorNode.Halt()
 }

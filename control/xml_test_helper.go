@@ -224,7 +224,6 @@ func registerDecoratorNodes(factory *core.BehaviorTreeFactory) {
 		"entry":          core.NewPortInfo(core.INPUT),
 		"if_not_updated": core.NewPortInfo(core.INPUT),
 	}, func(name string, config core.NodeConfig) core.TreeNode {
-		// Default if_not_updated to FAILURE if not set
 		ifNotUpdated := core.FAILURE
 		if val, ok := config.InputPorts["if_not_updated"]; ok && val != "" {
 			switch val {
@@ -235,5 +234,35 @@ func registerDecoratorNodes(factory *core.BehaviorTreeFactory) {
 			}
 		}
 		return decorator.NewUpdatedDecorator(name, config, ifNotUpdated)
+	}, core.Decorator)
+
+	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
+		"output_key": core.NewPortInfo(core.INPUT),
+		"value":      core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
+		return action.NewSetBlackboardNode(name, config)
+	}, core.Action)
+
+	_ = factory.RegisterNodeType("UnsetBlackboard", core.PortsList{
+		"key": core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
+		return action.NewUnsetBlackboardNode(name, config)
+	}, core.Action)
+
+	_ = factory.RegisterNodeType("Loop", core.PortsList{
+		"queue":    core.NewPortInfo(core.INPUT),
+		"if_empty": core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
+		return decorator.NewLoopNode(name, config)
+	}, core.Decorator)
+
+	_ = factory.RegisterNodeType("ManualSelector", core.PortsList{
+		"repeat_last_selection": core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
+		return NewManualSelectorNode(name, config)
+	}, core.Control)
+
+	_ = factory.RegisterNodeType("SubTree", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
+		return decorator.NewSubTreeNode(name, config)
 	}, core.Decorator)
 }

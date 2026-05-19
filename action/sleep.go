@@ -2,7 +2,6 @@ package action
 
 import (
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
@@ -12,16 +11,12 @@ import (
 type SleepNode struct {
 	core.StatefulActionNode
 	msec         int
-	timerID      uint64
-	timer        *core.TimerQueue
+	startTime    time.Time
 	timerWaiting bool
-	delayMutex   sync.Mutex
 }
 
 func NewSleepNode(name string, config core.NodeConfig) *SleepNode {
-	n := &SleepNode{
-		timer: core.NewTimerQueue(),
-	}
+	n := &SleepNode{}
 	n.Init(name, config)
 	n.SetSelf(n)
 	n.SetRegistrationID("Sleep")
@@ -39,34 +34,24 @@ func (n *SleepNode) OnStart() core.NodeStatus {
 		return core.SUCCESS
 	}
 
-	n.SetStatus(core.RUNNING)
+	n.startTime = time.Now()
+	n.msec = msec
 	n.timerWaiting = true
-
-	n.timerID = n.timer.Add(time.Duration(msec)*time.Millisecond, func(aborted bool) {
-		n.delayMutex.Lock()
-		if !aborted {
-			n.EmitWakeUpSignal()
-		}
-		n.timerWaiting = false
-		n.delayMutex.Unlock()
-	})
-
+	n.SetStatus(core.RUNNING)
 	return core.RUNNING
 }
 
 func (n *SleepNode) OnRunning() core.NodeStatus {
-	// Process expired timers to update timerWaiting state
-	n.timer.ProcessExpired()
-
-	if n.timerWaiting {
+	if time.Since(n.startTime) < time.Duration(n.msec)*time.Millisecond {
 		return core.RUNNING
 	}
+	n.timerWaiting = false
+	n.EmitWakeUpSignal()
 	return core.SUCCESS
 }
 
 func (n *SleepNode) OnHalted() {
 	n.timerWaiting = false
-	n.timer.Cancel(n.timerID)
 }
 
 // Tick dispatches to OnStart or OnRunning based on the current status.

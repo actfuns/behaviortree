@@ -39,13 +39,11 @@ func (n *EntryUpdatedAction) Tick() core.NodeStatus {
 	if n.Config().Blackboard != nil {
 		entry := n.Config().Blackboard.GetEntry(n.entryKey)
 		if entry != nil {
-			entry.Lock()
 			currentID := entry.SequenceID()
-			previousID := n.sequenceID
+			prevID := n.sequenceID
 			n.sequenceID = currentID
-			entry.Unlock()
 
-			if previousID != currentID {
+			if prevID != currentID {
 				return core.SUCCESS
 			}
 		}

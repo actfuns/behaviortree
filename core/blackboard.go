@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -19,7 +18,6 @@ type AnyPtrLocked struct {
 // Get returns the Any value (must call Release when done).
 func (l *AnyPtrLocked) Get() *Any {
 	if l.entry != nil {
-		l.entry.mu.Lock()
 		l.locked = true
 		return &l.entry.value
 	}
@@ -29,7 +27,6 @@ func (l *AnyPtrLocked) Get() *Any {
 // Release unlocks the entry.
 func (l *AnyPtrLocked) Release() {
 	if l.locked && l.entry != nil {
-		l.entry.mu.Unlock()
 		l.locked = false
 	}
 }
@@ -45,17 +42,8 @@ type BlackboardEntry struct {
 	value      Any
 	info       TypeInfo
 	stringConv StringConverter
-	mu         sync.Mutex
 	sequenceID uint64
 	stamp      time.Time
-}
-
-func (e *BlackboardEntry) Lock() {
-	e.mu.Lock()
-}
-
-func (e *BlackboardEntry) Unlock() {
-	e.mu.Unlock()
 }
 
 func (e *BlackboardEntry) SequenceID() uint64 {
@@ -82,8 +70,6 @@ func (e *BlackboardEntry) StringConv() StringConverter {
 
 // GetValue returns a copy of the entry's value (must be locked).
 func (e *BlackboardEntry) GetValue() *Any {
-	e.mu.Lock()
-	defer e.mu.Unlock()
 	if e.value.IsEmpty() {
 		return nil
 	}
@@ -93,8 +79,6 @@ func (e *BlackboardEntry) GetValue() *Any {
 
 // SetValue sets the entry's value (must be locked).
 func (e *BlackboardEntry) SetValue(val Any) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
 	e.value = val
 	e.sequenceID++
 	e.stamp = time.Now()
@@ -102,7 +86,6 @@ func (e *BlackboardEntry) SetValue(val Any) {
 
 // Blackboard is the mechanism used to exchange typed data between nodes.
 type Blackboard struct {
-	mu                 sync.RWMutex
 	storage            map[string]*BlackboardEntry
 	parent             *Blackboard
 	internalToExternal map[string]string
@@ -130,9 +113,7 @@ func (bb *Blackboard) GetEntry(key string) *BlackboardEntry {
 		return bb.RootBlackboard().GetEntry(key[1:])
 	}
 
-	bb.mu.RLock()
 	entry, ok := bb.storage[key]
-	bb.mu.RUnlock()
 	if ok {
 		return entry
 	}
@@ -171,8 +152,6 @@ func (bb *Blackboard) Get(key string, dest interface{}) (bool, error) {
 		return false, nil
 	}
 
-	entry.mu.Lock()
-	defer entry.mu.Unlock()
 
 	if entry.value.IsEmpty() {
 		return false, nil
@@ -201,8 +180,6 @@ func (bb *Blackboard) GetInto(key string, dest interface{}) error {
 		return fmt.Errorf("Blackboard::get() error. Missing key [%s]", key)
 	}
 
-	entry.mu.Lock()
-	defer entry.mu.Unlock()
 
 	if entry.value.IsEmpty() {
 		return fmt.Errorf("Blackboard::get() error. Entry [%s] hasn't been initialized, yet", key)
@@ -218,8 +195,6 @@ func (bb *Blackboard) GetStamped(key string, dest interface{}) (*Timestamp, erro
 		return nil, fmt.Errorf("Blackboard::getStamped() error. Missing key [%s]", key)
 	}
 
-	entry.mu.Lock()
-	defer entry.mu.Unlock()
 
 	if entry.value.IsEmpty() {
 		return nil, fmt.Errorf("Blackboard::getStamped() error. Entry [%s] hasn't been initialized, yet", key)
@@ -255,9 +230,7 @@ func (bb *Blackboard) Set(key string, value interface{}) error {
 		valueType = reflect.TypeOf(value)
 	}
 
-	bb.mu.RLock()
 	existingEntry, ok := bb.storage[key]
-	bb.mu.RUnlock()
 
 	if !ok {
 		// Create new entry
@@ -272,16 +245,12 @@ func (bb *Blackboard) Set(key string, value interface{}) error {
 			return err
 		}
 
-		entry.mu.Lock()
 		entry.value = anyVal
 		entry.sequenceID++
 		entry.stamp = time.Now()
-		entry.mu.Unlock()
 		return nil
 	} else {
 		// Update existing entry — matches C++ set<T>() update path
-		existingEntry.mu.Lock()
-		defer existingEntry.mu.Unlock()
 
 		previousAny := &existingEntry.value
 
@@ -345,23 +314,17 @@ func (bb *Blackboard) Set(key string, value interface{}) error {
 
 // Unset removes a key from the blackboard.
 func (bb *Blackboard) Unset(key string) {
-	bb.mu.Lock()
-	defer bb.mu.Unlock()
 	delete(bb.storage, key)
 }
 
 // HasKey returns true if the key exists in the blackboard.
 func (bb *Blackboard) HasKey(key string) bool {
-	bb.mu.RLock()
-	defer bb.mu.RUnlock()
 	_, ok := bb.storage[key]
 	return ok
 }
 
 // GetKeys returns all keys in the blackboard.
 func (bb *Blackboard) GetKeys() []string {
-	bb.mu.RLock()
-	defer bb.mu.RUnlock()
 	keys := make([]string, 0, len(bb.storage))
 	for k := range bb.storage {
 		keys = append(keys, k)
@@ -371,8 +334,6 @@ func (bb *Blackboard) GetKeys() []string {
 
 // Clear removes all entries.
 func (bb *Blackboard) Clear() {
-	bb.mu.Lock()
-	defer bb.mu.Unlock()
 	bb.storage = make(map[string]*BlackboardEntry)
 }
 
@@ -408,8 +369,6 @@ func (bb *Blackboard) CreateEntry(key string, info PortInfo) (*BlackboardEntry, 
 }
 
 func (bb *Blackboard) createEntryImpl(key string, info PortInfo) (*BlackboardEntry, error) {
-	bb.mu.Lock()
-	defer bb.mu.Unlock()
 
 	// Check if already exists
 	if entry, ok := bb.storage[key]; ok {
@@ -517,8 +476,6 @@ func stringConverterForKind(k reflect.Kind) StringConverter {
 
 // DebugMessage prints debug information about the blackboard.
 func (bb *Blackboard) DebugMessage() {
-	bb.mu.RLock()
-	defer bb.mu.RUnlock()
 	for key, entry := range bb.storage {
 		portType := entry.info.Type()
 		typeName := "unknown"
@@ -547,8 +504,6 @@ func (bb *Blackboard) CloneInto(dst *Blackboard) {
 
 	// Step 1: snapshot src/dst entries under both storage mutexes.
 	{
-		bb.mu.RLock()
-		dst.mu.RLock()
 
 		// Build set of dst keys
 		dstKeys := make(map[string]bool)
@@ -569,8 +524,6 @@ func (bb *Blackboard) CloneInto(dst *Blackboard) {
 			keysToRemove = append(keysToRemove, key)
 		}
 
-		dst.mu.RUnlock()
-		bb.mu.RUnlock()
 	}
 	// storage mutexes released here
 
@@ -584,35 +537,28 @@ func (bb *Blackboard) CloneInto(dst *Blackboard) {
 	for _, task := range tasks {
 		if task.dstEntry != nil {
 			// overwrite existing entry — lock both entry mutexes
-			task.srcEntry.mu.Lock()
 			val := task.srcEntry.value
 			info := task.srcEntry.info
 			conv := task.srcEntry.stringConv
-			task.srcEntry.mu.Unlock()
 
-			task.dstEntry.mu.Lock()
 			task.dstEntry.value = val
 			task.dstEntry.info = info
 			task.dstEntry.stringConv = conv
 			task.dstEntry.sequenceID++
 			task.dstEntry.stamp = time.Now()
-			task.dstEntry.mu.Unlock()
 		} else {
 			// create new entry from src
-			task.srcEntry.mu.Lock()
 			newEnt := &BlackboardEntry{
 				value:      task.srcEntry.value,
 				info:       task.srcEntry.info,
 				stringConv: task.srcEntry.stringConv,
 			}
-			task.srcEntry.mu.Unlock()
 			newEntries = append(newEntries, newEntry{key: task.key, entry: newEnt})
 		}
 	}
 
 	// Step 3: insert new entries and remove stale ones under dst storage mutex.
 	if len(newEntries) > 0 || len(keysToRemove) > 0 {
-		dst.mu.Lock()
 		for _, ne := range newEntries {
 			if _, exists := dst.storage[ne.key]; !exists {
 				dst.storage[ne.key] = ne.entry
@@ -621,6 +567,5 @@ func (bb *Blackboard) CloneInto(dst *Blackboard) {
 		for _, key := range keysToRemove {
 			delete(dst.storage, key)
 		}
-		dst.mu.Unlock()
 	}
 }

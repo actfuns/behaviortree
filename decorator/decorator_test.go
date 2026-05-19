@@ -126,10 +126,8 @@ func TestDeadlineTriggered(t *testing.T) {
 		t.Fatalf("first tick: want RUNNING, got %v", state)
 	}
 
-	// Wait for the timeout timer to expire, then process it manually
-	// since TimeoutNode does not call ProcessExpired in its Tick.
+	// Wait for the timeout to expire naturally.
 	time.Sleep(25 * time.Millisecond)
-	timeout.timer.ProcessExpired()
 
 	state = timeout.ExecuteTick()
 	if state != core.FAILURE {
@@ -275,7 +273,6 @@ func TestTimeoutAndRetry_Issue57(t *testing.T) {
 	timeout.SetChild(retry)
 
 	// This should not loop forever; the timeout should halt the child.
-	// Manually process the timer since TimeoutNode doesn't call ProcessExpired.
 	deadline := time.After(2 * time.Second)
 	for {
 		select {
@@ -287,8 +284,6 @@ func TestTimeoutAndRetry_Issue57(t *testing.T) {
 		if status == core.FAILURE || status == core.SUCCESS {
 			break
 		}
-		// Process the timer queue to allow timeouts to fire
-		timeout.timer.ProcessExpired()
 		time.Sleep(time.Microsecond * 50)
 	}
 
@@ -704,14 +699,12 @@ type testNode struct {
 	core.StatefulActionNode
 	returnStatus core.NodeStatus
 	asyncDelayMs int
-	timer        *core.TimerQueue
-	completed    bool
+	startTime    time.Time
 }
 
 func newTestNode(name string, cfg core.NodeConfig) *testNode {
 	n := &testNode{
 		returnStatus: core.SUCCESS,
-		timer:        core.NewTimerQueue(),
 	}
 	// Read config from InputPorts strings before Init (GetInputTyped needs a fully initialized node)
 	if v, ok := cfg.InputPorts["return_status"]; ok {
@@ -739,26 +732,18 @@ func (n *testNode) OnStart() core.NodeStatus {
 	if n.asyncDelayMs <= 0 {
 		return n.returnStatus
 	}
-	n.completed = false
-	n.timer.Add(time.Duration(n.asyncDelayMs)*time.Millisecond, func(aborted bool) {
-		if !aborted {
-			n.completed = true
-			n.EmitWakeUpSignal()
-		}
-	})
+	n.startTime = time.Now()
 	return core.RUNNING
 }
 
 func (n *testNode) OnRunning() core.NodeStatus {
-	n.timer.ProcessExpired()
-	if n.completed {
+	if n.asyncDelayMs <= 0 || time.Since(n.startTime) >= time.Duration(n.asyncDelayMs)*time.Millisecond {
 		return n.returnStatus
 	}
 	return core.RUNNING
 }
 
 func (n *testNode) OnHalted() {
-	n.timer.CancelAll()
 }
 
 func (n *testNode) Tick() core.NodeStatus {

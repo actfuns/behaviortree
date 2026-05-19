@@ -21,7 +21,7 @@ type TestNodeConfig struct {
 	// PostScript is executed when the action is completed.
 	PostScript string
 
-	// AsyncDelay if > 0 makes this action asynchronous waiting this amount of time (ms).
+	// AsyncDelayMs if > 0 makes this action asynchronous waiting this amount of time (ms).
 	AsyncDelayMs int
 
 	// CompleteFunc is an optional function invoked when the action is completed.
@@ -37,14 +37,13 @@ type TestNode struct {
 	successExecutor core.ScriptFunction
 	failureExecutor core.ScriptFunction
 	postExecutor    core.ScriptFunction
-	timer           *core.TimerQueue
-	completed       bool
+	startTime       time.Time
+	msec            int
 }
 
 func NewTestNode(name string, cfg core.NodeConfig, testConfig *TestNodeConfig) *TestNode {
 	n := &TestNode{
 		config: testConfig,
-		timer:  core.NewTimerQueue(),
 	}
 	n.Init(name, cfg)
 	n.SetSelf(n)
@@ -79,27 +78,19 @@ func (n *TestNode) OnStart() core.NodeStatus {
 	if n.config.AsyncDelayMs <= 0 {
 		return n.onCompleted()
 	}
-	n.completed = false
-	n.timer.Add(time.Duration(n.config.AsyncDelayMs)*time.Millisecond, func(aborted bool) {
-		if !aborted {
-			n.completed = true
-			n.EmitWakeUpSignal()
-		} else {
-			n.completed = false
-		}
-	})
+	n.startTime = time.Now()
+	n.msec = n.config.AsyncDelayMs
 	return core.RUNNING
 }
 
 func (n *TestNode) OnRunning() core.NodeStatus {
-	if n.completed {
-		return n.onCompleted()
+	if n.msec > 0 && time.Since(n.startTime) < time.Duration(n.msec)*time.Millisecond {
+		return core.RUNNING
 	}
-	return core.RUNNING
+	return n.onCompleted()
 }
 
 func (n *TestNode) OnHalted() {
-	n.timer.CancelAll()
 }
 
 // Tick dispatches to OnStart or OnRunning based on the current status.
