@@ -180,4 +180,4 @@ go test github.com/actfuns/behaviortree/...
 
 ## 参考
 
-C++ 原版：[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP)（[本地镜像](third_party/BehaviorTree.CPP/)）
+C++ 原版：[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP)
