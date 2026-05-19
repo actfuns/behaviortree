@@ -2,9 +2,9 @@ package control
 
 import (
 	"log/slog"
-)
 
-import "github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/core"
+)
 
 // WhileDoElseNode must have exactly 2 or 3 children.
 // It is a REACTIVE node of IfThenElseNode.
@@ -45,16 +45,18 @@ func (n *WhileDoElseNode) Tick() core.NodeStatus {
 
 	status := core.IDLE
 
-	if conditionStatus == core.SUCCESS {
+	switch conditionStatus {
+	case core.SUCCESS:
 		if childrenCount == 3 {
 			n.HaltChild(2)
 		}
 		status = n.Child(1).ExecuteTick()
-	} else if conditionStatus == core.FAILURE {
-		if childrenCount == 3 {
+	case core.FAILURE:
+		switch childrenCount {
+		case 3:
 			n.HaltChild(1)
 			status = n.Child(2).ExecuteTick()
-		} else if childrenCount == 2 {
+		case 2:
 			status = core.FAILURE
 		}
 	}

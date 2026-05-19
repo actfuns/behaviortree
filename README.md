@@ -1,23 +1,6 @@
-# BehaviorTree — 行为树库 (Go)
+# BehaviorTree — Go 行为树引擎
 
-[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP) 的 Go 移植版本，提供构建模块化、响应式 AI 行为树的框架。
-
-## 包结构
-
-| 包 | 说明 |
-|---------|-------------|
-| [core](core/) | 核心类型：`TreeNode`、`NodeStatus`、`Blackboard`、`BehaviorTreeFactory`、端口系统 |
-| [action](action/) | 内置动作节点：`Script`、`Sleep`、`SetBlackboard`、`AlwaysSuccess/Failure`、`EntryUpdatedAction` 等 |
-| [control](control/) | 控制流节点：`Sequence`（及变体）、`Fallback`（及变体）、`Parallel`、`ReactiveSequence/Fallback`、`IfThenElse`、`WhileDoElse`、`TryCatch`、`Switch`（2~5 分支）等 |
-| [decorator](decorator/) | 装饰器节点：`Retry`、`Repeat`、`Timeout`、`Delay`、`Inverter`、`ForceSuccess/Failure`、`KeepRunningUntilFailure`、`RunOnce`���`SubTree`、`Precondition`、`Loop`、`UpdatedDecorator` 等 |
-| [script](script/) | BT 脚本分词器、解析器和执行器，用于嵌入式条件表达式 |
-| [xml](xml/) | 行为树的 XML 序列化和反序列化 |
-
-## 安装
-
-```bash
-go get github.com/actfuns/behaviortree
-```
+[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP) v4.x 的 Go 移植。405+ 测试用例覆盖全部核心功能。
 
 ## 快速开始
 
@@ -26,6 +9,7 @@ package main
 
 import (
     "fmt"
+
     "github.com/actfuns/behaviortree/core"
     _ "github.com/actfuns/behaviortree/script"
     _ "github.com/actfuns/behaviortree/xml"
@@ -33,8 +17,7 @@ import (
 
 func main() {
     factory, _ := core.NewBehaviorTreeFactory()
-
-    factory.RegisterSimpleAction("Hello", func(core.TreeNode) core.NodeStatus {
+    factory.RegisterSimpleAction("Say", func(core.TreeNode) core.NodeStatus {
         fmt.Println("Hello, BT!")
         return core.SUCCESS
     }, core.PortsList{})
@@ -42,63 +25,159 @@ func main() {
     tree, _ := factory.CreateTreeFromText(`
         <root BTCPP_format="4">
             <BehaviorTree ID="Main">
-                <Hello/>
+                <Say/>
             </BehaviorTree>
         </root>`, nil)
 
     tree.TickWhileRunning(0)
+    // Output: Hello, BT!
 }
 ```
 
-## 主要特性
+## 安装
 
-- **节点类型**: Action（动作）、Condition（条件）、Control（控制）、Decorator（装饰器）、SubTree（子树）
-- **端口系统**: 基于 Blackboard 的类型安全数据流，支持 `InputPort`/`OutputPort`/`BidirectionalPort`
-- **类型安全**: 端口规则系统验证类型兼容性；字符串作为"通用供体"可自动转换
-- **响应式节点**: `ReactiveSequence`、`ReactiveFallback` — 每次 tick 重新评估条件
-- **异步支持**: 节点返回 `RUNNING` 表示需要多次 tick；唤醒信号驱动自动重试
-- **状态变化监听**: `StateChangeListener` 订阅节点状态变更事件
-- **XML 加载**: 完整支持 BehaviorTree.CPP `BTCPP_format="4"` XML 解析，含 `<include>` 和子树
-- **脚本表达式**: 支持内联脚本（赋值、算术、比较、三元运算），可用作条件/前置/后置条件
-- **三种 tick 模式**: `TickOnce()` / `TickExactlyOnce()` / `TickWhileRunning()`，匹配 C++ API
-- **SubTree 支持**: 树组合与端口重映射，子树间黑��板隔离
-- **替换规则**: `AddSubstitutionRule` 支持 XML 级别的节点类型替换（通配符匹配）
-- **枚举注册**: `RegisterScriptingEnum` 支持在脚本中使用枚举值
-- **线程安全**: 工厂和黑板操作支持并发读写
-- **测试覆盖**: 405+ 测试用例，涵盖所有核心功能和 C++ 对比测试
+```bash
+go get github.com/actfuns/behaviortree
+```
+
+## 架构
+
+### 包一览
+
+| 包 | 职责 |
+|---|---|
+| [core](core/) | 节点接口、状态机、黑板、工厂、端口/类型系统、脚本环境 |
+| [control](control/) | 序列、回退、并行、反应式序列、IfThenElse、WhileDoElse、Switch、TryCatch |
+| [decorator](decorator/) | 重试、重复、超时、延迟、逆变器、ForceSuccess/Failure、KeepRunning、SubTree、前置条件 |
+| [action](action/) | 内建动作：Script、Sleep、SetBlackboard、AlwaysSuccess/Failure、EntryUpdated |
+| [script](script/) | 嵌入式脚本引擎：赋值、算术、比较、三元运算 |
+| [xml](xml/) | BTCPP_format="4" XML 解析与序列化 |
+
+### 节点类型
+
+| 类型 | 说明 |
+|---|---|
+| **Action** | 执行一个具体动作，返回 SUCCESS / FAILURE / RUNNING |
+| **Condition** | 检查条件，返回 SUCCESS / FAILURE |
+| **Control** | 控制子节点的执行顺序和策略 |
+| **Decorator** | 包装单个子节点，修改其行为 |
+| **SubTree** | 引用另一棵行为树 |
+
+### 节点状态机
+
+```
+IDLE ── tick ──► RUNNING ── tick ──► SUCCESS / FAILURE / SKIPPED
+  ▲                    │
+  └──── reset ◄────────┘
+```
+
+| 状态 | 含义 |
+|---|---|
+| `IDLE` | 初始状态，尚未执行 |
+| `RUNNING` | 执行中，需要继续 tick |
+| `SUCCESS` | 执行成功 |
+| `FAILURE` | 执行失败 |
+| `SKIPPED` | 因前置条件跳过 |
+
+### 三种 Tick 模式
+
+- **`TickOnce()`** — 单次 tick，处理唤醒信号，返回顶层状态
+- **`TickExactlyOnce()`** — 单次精确 tick（不额外处理唤醒）
+- **`TickWhileRunning(timeout)`** — 循环 tick 直到完成或超时
+
+## 配置行为树
+
+### XML 方式（推荐）
+
+```go
+factory.RegisterBehaviorTreeFromText(xmlText)
+tree, _ := factory.CreateTree("MainTree", blackboard)
+```
+
+### 编程方式
+
+```go
+seq := control.NewSequenceNode("seq", config)
+seq.AddChild(child1)
+seq.AddChild(child2)
+status := seq.ExecuteTick()
+```
+
+## 端口系统
+
+节点通过端口声明输入/输出，XML 中通过 `{}` 语法映射到黑板键。
+
+```go
+// 声明带端口的节点
+_ = factory.RegisterNodeType("SetMessage", core.PortsList{
+    "message": core.NewPortInfo(core.INPUT),
+}, func(name string, config core.NodeConfig) core.TreeNode {
+    return NewSetMessage(name, config)
+}, core.Action)
+```
+
+```xml
+<!-- XML 中绑定黑板变量 -->
+<SetMessage message="{my_text}"/>
+```
+
+端口方向：`INPUT` / `OUTPUT` / `INOUT`。字符串作为通用供体可自动转换为数值类型。
+
+## 脚本表达式
+
+用在 `<Script>`、`_skipIf`、`_successIf`、`_failureIf`、`_onSuccess` 等属性中。
+
+```
+counter := counter + 1
+msg == "done" ? "finished" : "working"
+x > 0 && y < 10
+```
 
 ## 前置/后置条件
 
-节点支持以下条件属性：
-
-| 属性 | 效果 |
-|--------|--------|
-| `_successIf="expr"` | 表达式为真时节点返回 SUCCESS |
-| `_failureIf="expr"` | 表达式为真时节点返回 FAILURE |
-| `_skipIf="expr"` | 表达式为真时节点被跳过 (SKIPPED) |
-| `_while="expr"` | 表达式为真时节点可运行，为假时跳过 |
-| `_onSuccess="script"` | 节点 SUCCESS 时执行脚本 |
-| `_onFailure="script"` | 节点 FAILURE 时执行脚本 |
+| 属性 | 触发条件 |
+|---|---|
+| `_successIf="expr"` | 表达式为真时节点直接返回 SUCCESS |
+| `_failureIf="expr"` | 表达式为真时节点直接返回 FAILURE |
+| `_skipIf="expr"` | 表达式为真时节点跳过（SKIPPED） |
+| `_while="expr"` | 表达式为真才允许节点运行 |
+| `_onSuccess="script"` | 节点成功时执行脚本 |
+| `_onFailure="script"` | 节点失败时执行脚本 |
 | `_onHalted="script"` | 节点被中断时执行脚本 |
 
-## 节点状态
+## 子树与端口重映射
 
-| 状态 | 含义 |
-|--------|---------|
-| `IDLE` | 尚未被 tick |
-| `RUNNING` | 执行中，需要更多 tick |
-| `SUCCESS` | 执行成功 |
-| `FAILURE` | 执行失败 |
-| `SKIPPED` | 因前置条件被跳过 |
+```xml
+<BehaviorTree ID="Sub">
+    <Sequence>
+        <Script code="msg := '{input}'"/>
+    </Sequence>
+</BehaviorTree>
 
-## 运行测试
+<BehaviorTree ID="Main">
+    <SubTree ID="Sub" input="{my_variable}"/>
+</BehaviorTree>
+```
+
+自���重映射：`_autoremap="true"` 自��将同名��段透传到子树。
+
+## 测试
 
 ```bash
 go test github.com/actfuns/behaviortree/...
 ```
 
-全部 6 个包、405+ 个测试用例通过，覆盖核心模块、控制流节点、装饰器、脚本引擎和 XML 解析。
+405+ 测试覆盖：
 
-## C++ 参考实现
+| 包 | 测试文件 | 函数数 |
+|---|---|---|
+| core | 15 个 | 208 |
+| control | 3 个 | 97 |
+| decorator | 3 个 | 37 |
+| xml | 2 个 | 29 |
+| script | 2 个 | 22 |
+| action | 3 个 | 8 |
 
-C++ 参考实现位于 [third_party/BehaviorTree.CPP/](third_party/BehaviorTree.CPP/)。
+## 参考
+
+C++ 原版：[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP)（[本地镜像](third_party/BehaviorTree.CPP/)）

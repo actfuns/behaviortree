@@ -115,25 +115,6 @@ func (n *runningConditionNode) Tick() core.NodeStatus {
 	return prevStatus
 }
 
-// registerRunningCondition registers a custom condition that returns RUNNING for
-// `runTicks` ticks then completes with `finalStatus`.
-func registerRunningCondition(factory *core.BehaviorTreeFactory, id string, finalStatus core.NodeStatus, runTicks int) *int {
-	tickCount := 0
-	target := &tickCount
-	_ = factory.RegisterNodeType(id, core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		n := &runningConditionNode{
-			tickCountPtr: target,
-			runTicks:     runTicks,
-			finalStatus:  finalStatus,
-		}
-		n.Init(name, config)
-		n.SetSelf(n)
-		n.SetRegistrationID(id)
-		return n
-	}, core.Condition)
-	return target
-}
-
 // ============================================================================
 // Fallback Tests
 // ============================================================================

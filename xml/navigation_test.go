@@ -3,7 +3,6 @@ package xml
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/actfuns/behaviortree/action"
 	"github.com/actfuns/behaviortree/control"
@@ -966,14 +965,6 @@ func (n *saySomethingNode) Tick() core.NodeStatus {
 	}
 	fmt.Println(msg)
 	return core.SUCCESS
-}
-
-func waitForWakeUp(tree *core.Tree, duration time.Duration) {
-	tick := 0
-	for tick < 100 {
-		tree.Sleep(duration / 100)
-		tick++
-	}
 }
 
 // ----------------------------------------------------------------

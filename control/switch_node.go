@@ -61,12 +61,13 @@ func (n *SwitchNode) Tick() core.NodeStatus {
 		return core.FAILURE
 	}
 	ret := selectedChild.ExecuteTick()
-	if ret == core.SKIPPED {
+	switch ret {
+	case core.SKIPPED:
 		n.runningChild = -1
 		return core.SKIPPED
-	} else if ret == core.RUNNING {
+	case core.RUNNING:
 		n.runningChild = matchIndex
-	} else {
+	default:
 		n.ResetChildren()
 		n.runningChild = -1
 	}

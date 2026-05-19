@@ -2,9 +2,9 @@ package control
 
 import (
 	"log/slog"
-)
 
-import "github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/core"
+)
 
 // IfThenElseNode must have exactly 2 or 3 children. This node is NOT reactive.
 // First child is the "if" condition.
@@ -38,9 +38,10 @@ func (n *IfThenElseNode) Tick() core.NodeStatus {
 		if conditionStatus == core.RUNNING {
 			return conditionStatus
 		}
-		if conditionStatus == core.SUCCESS {
+		switch conditionStatus {
+		case core.SUCCESS:
 			n.childIdx = 1
-		} else if conditionStatus == core.FAILURE {
+		case core.FAILURE:
 			if childrenCount == 3 {
 				n.childIdx = 2
 			} else {

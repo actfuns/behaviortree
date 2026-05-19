@@ -566,9 +566,10 @@ func TestControl_Parallel_Issue819_SequenceVsReactiveSequence(t *testing.T) {
 
 		_ = factory.RegisterSimpleCondition("TestCondition", func(self core.TreeNode) core.NodeStatus {
 			name := self.Name()
-			if name == "cond1" {
+			switch name {
+			case "cond1":
 				tickCount1++
-			} else if name == "cond2" {
+			case "cond2":
 				tickCount2++
 			}
 			return core.SUCCESS
@@ -632,9 +633,10 @@ func TestControl_Parallel_Issue819_SequenceVsReactiveSequence(t *testing.T) {
 
 		_ = factory.RegisterSimpleCondition("TestCondition", func(self core.TreeNode) core.NodeStatus {
 			name := self.Name()
-			if name == "cond1" {
+			switch name {
+			case "cond1":
 				tickCount1++
-			} else if name == "cond2" {
+			case "cond2":
 				tickCount2++
 			}
 			return core.SUCCESS

@@ -115,7 +115,6 @@ func TestSimpleString_Copy(t *testing.T) {
 
 	// Self-assignment (no-op in Go)
 	s := "test"
-	s = s
 	if s != "test" {
 		t.Errorf("expected 'test' after self-assignment")
 	}

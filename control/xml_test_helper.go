@@ -227,9 +227,10 @@ func registerDecoratorNodes(factory *core.BehaviorTreeFactory) {
 		// Default if_not_updated to FAILURE if not set
 		ifNotUpdated := core.FAILURE
 		if val, ok := config.InputPorts["if_not_updated"]; ok && val != "" {
-			if val == "SUCCESS" {
+			switch val {
+			case "SUCCESS":
 				ifNotUpdated = core.SUCCESS
-			} else if val == "SKIPPED" {
+			case "SKIPPED":
 				ifNotUpdated = core.SKIPPED
 			}
 		}

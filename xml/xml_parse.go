@@ -454,7 +454,7 @@ func (p *xmlParser) recursivelyCreateSubtree(treeID, treePath, prefixPath string
 	return recStep(rootNode, rootElement, 0, prefixPath)
 }
 
-func (p *xmlParser) isSubTreeType(element *xmlNode, id string) bool {
+func (p *xmlParser) isSubTreeType(_ *xmlNode, id string) bool {
 	// Check if a SubTree element has been registered via the factory
 	// SubTree nodes have NodeType == Subtree (5)
 	manifests := p.factory.Manifests()
@@ -668,7 +668,7 @@ func (p *xmlParser) createNodeFromXML(element *xmlNode, blackboard *core.Blackbo
 	}
 
 	// Create node via factory
-	isSubTreeNode := func(name, id string, config core.NodeConfig) (core.TreeNode, error) {
+	isSubTreeNode := func(_, _ string, config core.NodeConfig) (core.TreeNode, error) {
 		if isSubTree {
 			return p.factory.InstantiateTreeNode(instanceName, "SubTree", config)
 		}
