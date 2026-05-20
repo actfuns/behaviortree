@@ -324,6 +324,9 @@ func (f *behaviorTreeFactory) RegisterSimpleDecorator(id string, tickFn func(cor
 func (f *behaviorTreeFactory) RegisterScriptingEnum(name string, value int) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if existing, ok := f.enums[name]; ok && existing != value {
+		panic(fmt.Sprintf("RegisterScriptingEnum: [%s] was already registered with a different value (%d vs %d)", name, existing, value))
+	}
 	f.enums[name] = value
 }
 

@@ -20,6 +20,7 @@ func NewTimeoutNode(name string, config core.NodeConfig) *TimeoutNode {
 	n := &TimeoutNode{}
 	n.Init(name, config)
 	n.SetSelf(n)
+	n.SetRegistrationID("Timeout")
 	return n
 }
 

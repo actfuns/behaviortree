@@ -791,8 +791,18 @@ func (e *exprAssignment) evaluate(env *scriptEnv) core.Any {
 				// Check type compatibility — C++ behavior: once a variable has a type,
 				// incompatible assignments must fail
 				if value.IsString() && !existingVal.IsString() {
-					// String to non-string: try to use string converter or check if target is number
-					if existingVal.IsNumber() {
+					// String to non-string: try converter, then number fallback (C++ order)
+					s, _ := value.ToString()
+					if conv := entry.Info().Converter(); conv != nil {
+						parsed, err := conv(s)
+						if err != nil {
+							panic(fmt.Sprintf("Error assigning a value to entry [%s]. "+
+								"String conversion failed: %v", key, err))
+						}
+						if err := env.blackboard.Set(key, parsed.Interface()); err != nil {
+							panic(err.Error())
+						}
+					} else if existingVal.IsNumber() {
 						// Allow string-to-number conversion via stringToDouble
 						numVal := stringToDouble(value, env)
 						if err := env.blackboard.Set(key, core.AnyOf(numVal).Interface()); err != nil {
@@ -847,8 +857,14 @@ func (e *exprAssignment) evaluate(env *scriptEnv) core.Any {
 	}
 
 	if value.IsNumber() {
-		ev, _ := existingV.ToFloat64()
-		rv, _ := value.ToFloat64()
+		ev, err := existingV.ToFloat64()
+		if err != nil {
+			panic(fmt.Sprintf("compound assignment: left operand [%s] is not numeric, got %s", key, existingV.Type().String()))
+		}
+		rv, err := value.ToFloat64()
+		if err != nil {
+			panic(fmt.Sprintf("compound assignment: right operand is not numeric, got %s", value.Type().String()))
+		}
 		var result float64
 		switch e.op {
 		case assignPlus:
@@ -1200,13 +1216,18 @@ func newScriptEnv(blackboard *core.Blackboard, enums *core.ScriptingEnumsRegistr
 func ParseScript(script string) (core.ScriptFunction, error) {
 	exprs, err := parseStatements(script)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error in script [%s]\n%w", script, err)
 	}
 	if len(exprs) == 0 {
 		return nil, fmt.Errorf("Empty Script")
 	}
 	fn := func(env core.ScriptEnv) core.Any {
 		senv := newScriptEnv(env.Blackboard, env.Enums)
+		defer func() {
+			if r := recover(); r != nil {
+				panic(fmt.Sprintf("Error in script [%s]\n%v", script, r))
+			}
+		}()
 		for i := 0; i < len(exprs)-1; i++ {
 			exprs[i].evaluate(senv)
 		}

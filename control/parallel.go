@@ -12,7 +12,7 @@ type ParallelNode struct {
 	core.ControlNode
 	successThreshold       int
 	failureThreshold       int
-	completedList          map[int]bool
+	completedList          []bool
 	successCount           int
 	failureCount           int
 	readParameterFromPorts bool
@@ -22,7 +22,7 @@ func NewParallelNode(name string, config core.NodeConfig) *ParallelNode {
 	n := &ParallelNode{
 		successThreshold:       -1,
 		failureThreshold:       1,
-		completedList:          make(map[int]bool),
+		completedList:          nil,
 		readParameterFromPorts: false,
 	}
 	n.Init(name, config)
@@ -101,6 +101,10 @@ func (n *ParallelNode) Tick() core.NodeStatus {
 
 	skippedCount := 0
 
+	if len(n.completedList) != childrenCount {
+		n.completedList = make([]bool, childrenCount)
+	}
+
 	for i := 0; i < childrenCount; i++ {
 		if n.completedList[i] {
 			continue
@@ -153,7 +157,7 @@ func (n *ParallelNode) Tick() core.NodeStatus {
 }
 
 func (n *ParallelNode) clear() {
-	n.completedList = make(map[int]bool)
+	clear(n.completedList)
 	n.successCount = 0
 	n.failureCount = 0
 }

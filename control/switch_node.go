@@ -15,6 +15,7 @@ import (
 type SwitchNode struct {
 	core.ControlNode
 	runningChild int
+	caseKeys     []string // pre-computed "case_N" keys, lazily initialized
 }
 
 // NewSwitchNode creates a SwitchNode.
@@ -39,10 +40,17 @@ func (n *SwitchNode) Tick() core.NodeStatus {
 
 	// No variable? Jump to default
 	if variable, err := core.GetInputTyped[string](n, "variable"); err == nil {
+		// Lazy-init case keys
+		if n.caseKeys == nil && numCases > 0 {
+			n.caseKeys = make([]string, numCases)
+			for i := range numCases {
+				n.caseKeys[i] = fmt.Sprintf("case_%d", i+1)
+			}
+		}
+
 		// Check each case until you find a match
 		for index := 0; index < numCases; index++ {
-			caseKey := fmt.Sprintf("case_%d", index+1)
-			if value, err := core.GetInputTyped[string](n, caseKey); err == nil {
+			if value, err := core.GetInputTyped[string](n, n.caseKeys[index]); err == nil {
 				if checkStringEquality(variable, value, n.Config().Enums) {
 					matchIndex = index
 					break

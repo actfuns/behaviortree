@@ -23,20 +23,37 @@ func AnyOf(v interface{}) Any {
 	if v == nil {
 		return Any{}
 	}
-	val := reflect.ValueOf(v)
-	switch val.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return Any{value: val.Int(), originalType: val.Type()}
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return Any{value: int64(val.Uint()), originalType: val.Type()}
-	case reflect.Float32, reflect.Float64:
-		return Any{value: val.Float(), originalType: val.Type()}
-	case reflect.String:
-		return Any{value: v, originalType: reflect.TypeOf("")}
-	case reflect.Bool:
-		return Any{value: v, originalType: reflect.TypeOf(true)}
+	switch val := v.(type) {
+	case int:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case int8:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case int16:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case int32:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case int64:
+		return Any{value: val, originalType: reflect.TypeOf(val)}
+	case uint:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case uint8:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case uint16:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case uint32:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case uint64:
+		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+	case float32:
+		return Any{value: float64(val), originalType: reflect.TypeOf(val)}
+	case float64:
+		return Any{value: val, originalType: reflect.TypeOf(val)}
+	case string:
+		return Any{value: val, originalType: reflect.TypeOf("")}
+	case bool:
+		return Any{value: val, originalType: reflect.TypeOf(true)}
 	default:
-		return Any{value: v, originalType: val.Type()}
+		return Any{value: val, originalType: reflect.TypeOf(val)}
 	}
 }
 

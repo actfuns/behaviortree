@@ -43,7 +43,6 @@ func (n *RunOnceNode) Tick() core.NodeStatus {
 }
 
 func (n *RunOnceNode) Halt() {
-	n.alreadyTicked = false
-	n.returnedStatus = core.IDLE
+	// C++ does not reset already_ticked_ / returned_status on halt
 	n.DecoratorNode.Halt()
 }

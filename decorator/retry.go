@@ -24,6 +24,7 @@ func NewRetryNode(name string, config core.NodeConfig) *RetryNode {
 	}
 	n.Init(name, config)
 	n.SetSelf(n)
+	n.SetRegistrationID("RetryUntilSuccessful")
 	return n
 }
 

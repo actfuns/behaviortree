@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -11,7 +13,7 @@ type Tree struct {
 	Manifests map[string]TreeNodeManifest
 
 	wakeUp      *WakeUpSignal
-	uidCounter  uint16
+	uidCounter  atomic.Uint64
 	initialized bool
 }
 
@@ -179,8 +181,7 @@ func (t *Tree) RootBlackboard() *Blackboard {
 
 // GetUID returns a new unique ID.
 func (t *Tree) GetUID() uint16 {
-	t.uidCounter++
-	return t.uidCounter
+	return uint16(t.uidCounter.Add(1))
 }
 
 // ApplyVisitor calls the visitor for each node in the tree recursively.
@@ -217,11 +218,7 @@ func PrintTreeRecursively(root TreeNode) {
 }
 
 func indentStr(n int) string {
-	s := ""
-	for i := 0; i < n; i++ {
-		s += "   "
-	}
-	return s
+	return strings.Repeat("   ", n)
 }
 
 // ApplyRecursiveVisitor calls the visitor for each node in the tree recursively.

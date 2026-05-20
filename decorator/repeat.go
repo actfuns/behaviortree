@@ -24,6 +24,7 @@ func NewRepeatNode(name string, config core.NodeConfig) *RepeatNode {
 	}
 	n.Init(name, config)
 	n.SetSelf(n)
+	n.SetRegistrationID("Repeat")
 	return n
 }
 

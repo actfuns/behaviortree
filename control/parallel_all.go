@@ -11,14 +11,15 @@ import (
 // complete the execution of ALL its children.
 type ParallelAllNode struct {
 	core.ControlNode
-	completedList    map[int]struct{}
+	completedList    []bool
+	completedCount   int
 	failureCount     int
 	failureThreshold int
 }
 
 func NewParallelAllNode(name string, config core.NodeConfig) *ParallelAllNode {
 	n := &ParallelAllNode{
-		completedList:    make(map[int]struct{}),
+		completedList:    nil,
 		failureThreshold: 1,
 	}
 	n.Init(name, config)
@@ -56,11 +57,15 @@ func (n *ParallelAllNode) Tick() core.NodeStatus {
 
 	skippedCount := 0
 
+	if len(n.completedList) != childrenCount {
+		n.completedList = make([]bool, childrenCount)
+	}
+
 	for index := 0; index < childrenCount; index++ {
 		childNode := n.Child(index)
 
 		// Already completed
-		if _, ok := n.completedList[index]; ok {
+		if n.completedList[index] {
 			continue
 		}
 
@@ -68,10 +73,12 @@ func (n *ParallelAllNode) Tick() core.NodeStatus {
 
 		switch childStatus {
 		case core.SUCCESS:
-			n.completedList[index] = struct{}{}
+			n.completedList[index] = true
+			n.completedCount++
 
 		case core.FAILURE:
-			n.completedList[index] = struct{}{}
+			n.completedList[index] = true
+			n.completedCount++
 			n.failureCount++
 
 		case core.RUNNING:
@@ -89,10 +96,11 @@ func (n *ParallelAllNode) Tick() core.NodeStatus {
 	if skippedCount == childrenCount {
 		return core.SKIPPED
 	}
-	if skippedCount+len(n.completedList) >= childrenCount {
+	if skippedCount+n.completedCount >= childrenCount {
 		// DONE
 		n.HaltChildren()
-		n.completedList = make(map[int]struct{})
+		clear(n.completedList)
+		n.completedCount = 0
 		status := core.SUCCESS
 		if n.failureCount >= n.failureThreshold {
 			status = core.FAILURE
@@ -117,7 +125,8 @@ func (n *ParallelAllNode) resolveThreshold(threshold int, childrenCount int) int
 }
 
 func (n *ParallelAllNode) Halt() {
-	n.completedList = make(map[int]struct{})
+	clear(n.completedList)
+	n.completedCount = 0
 	n.failureCount = 0
 	n.ControlNode.Halt()
 }

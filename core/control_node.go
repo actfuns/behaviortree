@@ -59,9 +59,10 @@ func (n *ControlNode) Halt() {
 func (n *ControlNode) ResetChildren() {
 	for _, child := range n.children {
 		if child.Status() == RUNNING {
-			n.haltNode(child)
+			n.haltNode(child) // haltNode → Halt → ResetStatus (sets IDLE)
+		} else {
+			child.ResetStatus()
 		}
-		child.ResetStatus()
 	}
 }
 

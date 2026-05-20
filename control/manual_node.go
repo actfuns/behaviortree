@@ -39,10 +39,11 @@ func (n *ManualSelectorNode) Tick() core.NodeStatus {
 
 	idx := 0
 
+	n.SetStatus(core.RUNNING)
+
 	if repeatLast && n.previouslyExecutedIdx >= 0 {
 		idx = n.previouslyExecutedIdx
 	} else {
-		n.SetStatus(core.RUNNING)
 		idx = 0 // Default: tick the first child
 		n.previouslyExecutedIdx = idx
 	}

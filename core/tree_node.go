@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"sync"
 	"time"
@@ -261,7 +262,8 @@ func (b *treeNodeBase) checkPreConditions() (NodeStatus, bool) {
 				case SkipIf:
 					return SKIPPED, true
 				case WhileTrue:
-					return SKIPPED, true
+					// When _while is true and node is IDLE/SKIPPED,
+					// fall through — let the node tick normally
 				}
 			} else if preID == WhileTrue {
 				// While condition is false and node is IDLE/SKIPPED:
@@ -558,7 +560,18 @@ func (b *treeNodeBase) GetInput(key string, dest interface{}) error {
 		return b.config.Blackboard.GetInto(resolvedKey, dest)
 	}
 
-	// Pure string value, parse it
+	// Pure string value, parse it using the port's typed converter if available
+	if b.config.Manifest != nil {
+		if portInfo, ok := b.config.Manifest.Ports[key]; ok {
+			if portInfo.IsStronglyTyped() && portInfo.Converter() != nil {
+				parsed, err := portInfo.ParseString(portValueStr)
+				if err != nil {
+					return err
+				}
+				return assignValue(parsed, dest)
+			}
+		}
+	}
 	return parseStringValue(portValueStr, dest)
 }
 
@@ -663,51 +676,118 @@ func assignValue(src Any, dest interface{}) error {
 		return fmt.Errorf("assignValue: destination is nil")
 	}
 
-	dv := reflect.ValueOf(dest)
-	if dv.Kind() != reflect.Ptr || dv.IsNil() {
-		return fmt.Errorf("assignValue: destination must be a non-nil pointer")
-	}
-
-	elemType := dv.Elem().Type()
-
-	switch elemType.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	switch d := dest.(type) {
+	case *int:
 		v, err := src.ToInt64()
 		if err != nil {
 			return err
 		}
-		dv.Elem().SetInt(v)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		*d = int(v)
+	case *int8:
+		v, err := src.ToInt64()
+		if err != nil {
+			return err
+		}
+		if v < math.MinInt8 || v > math.MaxInt8 {
+			return fmt.Errorf("value %d out of range for int8", v)
+		}
+		*d = int8(v)
+	case *int16:
+		v, err := src.ToInt64()
+		if err != nil {
+			return err
+		}
+		if v < math.MinInt16 || v > math.MaxInt16 {
+			return fmt.Errorf("value %d out of range for int16", v)
+		}
+		*d = int16(v)
+	case *int32:
+		v, err := src.ToInt64()
+		if err != nil {
+			return err
+		}
+		if v < math.MinInt32 || v > math.MaxInt32 {
+			return fmt.Errorf("value %d out of range for int32", v)
+		}
+		*d = int32(v)
+	case *int64:
+		v, err := src.ToInt64()
+		if err != nil {
+			return err
+		}
+		*d = v
+	case *uint:
 		v, err := src.ToUint64()
 		if err != nil {
 			return err
 		}
-		dv.Elem().SetUint(v)
-	case reflect.Float32, reflect.Float64:
+		*d = uint(v)
+	case *uint8:
+		v, err := src.ToUint64()
+		if err != nil {
+			return err
+		}
+		if v > math.MaxUint8 {
+			return fmt.Errorf("value %d out of range for uint8", v)
+		}
+		*d = uint8(v)
+	case *uint16:
+		v, err := src.ToUint64()
+		if err != nil {
+			return err
+		}
+		if v > math.MaxUint16 {
+			return fmt.Errorf("value %d out of range for uint16", v)
+		}
+		*d = uint16(v)
+	case *uint32:
+		v, err := src.ToUint64()
+		if err != nil {
+			return err
+		}
+		if v > math.MaxUint32 {
+			return fmt.Errorf("value %d out of range for uint32", v)
+		}
+		*d = uint32(v)
+	case *uint64:
+		v, err := src.ToUint64()
+		if err != nil {
+			return err
+		}
+		*d = v
+	case *float32:
 		v, err := src.ToFloat64()
 		if err != nil {
 			return err
 		}
-		dv.Elem().SetFloat(v)
-	case reflect.String:
+		*d = float32(v)
+	case *float64:
+		v, err := src.ToFloat64()
+		if err != nil {
+			return err
+		}
+		*d = v
+	case *string:
 		v, err := src.ToString()
 		if err != nil {
 			return err
 		}
-		dv.Elem().SetString(v)
-	case reflect.Bool:
+		*d = v
+	case *bool:
 		v, err := src.ToBool()
 		if err != nil {
 			return err
 		}
-		dv.Elem().SetBool(v)
+		*d = v
+	case *Any:
+		*d = src
 	default:
-		// Handle destination type Any (core.Any struct)
-		if elemType == reflect.TypeOf(Any{}) {
-			dv.Elem().Set(reflect.ValueOf(src))
-			return nil
+		// Reflection fallback for unknown pointer types
+		dv := reflect.ValueOf(dest)
+		if dv.Kind() != reflect.Ptr || dv.IsNil() {
+			return fmt.Errorf("assignValue: destination must be a non-nil pointer")
 		}
-		// Try direct assignment
+		elemType := dv.Elem().Type()
 		if src.originalType != nil && src.originalType.AssignableTo(elemType) {
 			dv.Elem().Set(reflect.ValueOf(src.value))
 			return nil

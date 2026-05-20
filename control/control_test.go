@@ -3261,8 +3261,6 @@ func TestControl_Skipping_ReactiveSingleChild(t *testing.T) {
 }
 
 // TestControl_Skipping_WhileSkip verifies _while attribute.
-// In the Go port, _while on IDLE nodes always returns SKIPPED (regardless of
-// the condition value). This differs from C++ where _while=true allows execution.
 // Equivalent of C++ SkippingLogic.WhileSkip.
 func TestControl_Skipping_WhileSkip(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
@@ -3270,8 +3268,7 @@ func TestControl_Skipping_WhileSkip(t *testing.T) {
 	counters := make([]int, 2)
 	registerTestTick(factory, "Test", counters)
 
-	// First tree: doit=true, TestA should be ticked (C++ behavior).
-	// Go port: _while on IDLE always returns SKIPPED, so TestA is skipped.
+	// First tree: doit=true, TestA should be ticked (matching C++).
 	xmlText1 := `
 	<root BTCPP_format="4">
 		<BehaviorTree ID="MainTree">
@@ -3317,10 +3314,9 @@ func TestControl_Skipping_WhileSkip(t *testing.T) {
 		t.Errorf("tree2: expected SUCCESS, got %v", status)
 	}
 
-	// In Go port, _while on IDLE always returns SKIPPED, so both are 0.
-	// In C++, TestA should be 1 (doit=true means execute).
-	if counters[0] != 0 {
-		t.Errorf("TestA count = %d, want 0 (Go port: _while on IDLE always skips)", counters[0])
+	// TestA runs because doit=true (matching C++); TestB is skipped because doit=false.
+	if counters[0] != 1 {
+		t.Errorf("TestA count = %d, want 1 (doit=true allows execution)", counters[0])
 	}
 	if counters[1] != 0 {
 		t.Errorf("TestB count = %d, want 0 (skipped by _while)", counters[1])

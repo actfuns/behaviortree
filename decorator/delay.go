@@ -19,6 +19,7 @@ func NewDelayNode(name string, config core.NodeConfig) *DelayNode {
 	n := &DelayNode{}
 	n.Init(name, config)
 	n.SetSelf(n)
+	n.SetRegistrationID("Delay")
 	return n
 }
 
