@@ -3,9 +3,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestNameValidation_ForbiddenCharDetection tests findForbiddenChar equivalent.
@@ -99,11 +98,7 @@ func TestNameValidation_IsAllowedPortName_Invalid(t *testing.T) {
 }
 
 func TestNameValidation_ValidBehaviorTreeID(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -111,18 +106,14 @@ func TestNameValidation_ValidBehaviorTreeID(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestNameValidation_ValidBehaviorTreeID_WithUnderscore(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -130,18 +121,14 @@ func TestNameValidation_ValidBehaviorTreeID_WithUnderscore(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestNameValidation_InvalidBehaviorTreeID_WithSpace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -149,7 +136,7 @@ func TestNameValidation_InvalidBehaviorTreeID_WithSpace(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Go XML parser may or may not reject spaces in IDs.
 	// This test documents the current behavior.
 	if err != nil {
@@ -158,11 +145,7 @@ func TestNameValidation_InvalidBehaviorTreeID_WithSpace(t *testing.T) {
 }
 
 func TestNameValidation_InvalidBehaviorTreeID_WithPeriod(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -170,7 +153,7 @@ func TestNameValidation_InvalidBehaviorTreeID_WithPeriod(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Go XML parser may or may not reject periods in IDs.
 	if err != nil {
 		// If it DOES reject, that's valid behavior
@@ -178,11 +161,7 @@ func TestNameValidation_InvalidBehaviorTreeID_WithPeriod(t *testing.T) {
 }
 
 func TestNameValidation_ValidInstanceName(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -190,18 +169,14 @@ func TestNameValidation_ValidInstanceName(t *testing.T) {
 		    <AlwaysSuccess name="my_success_node"/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestNameValidation_ValidInstanceName_WithSpace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -209,18 +184,14 @@ func TestNameValidation_ValidInstanceName_WithSpace(t *testing.T) {
 		    <AlwaysSuccess name="my success node"/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestNameValidation_ValidSubTreeID(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -231,18 +202,14 @@ func TestNameValidation_ValidSubTreeID(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestNameValidation_InvalidSubTreeID_WithSpace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -253,18 +220,14 @@ func TestNameValidation_InvalidSubTreeID_WithSpace(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		// If the parser rejects subtree IDs with spaces, that's valid
 	}
 }
 
 func TestNameValidation_UnicodeTreeID_Chinese(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -272,18 +235,14 @@ func TestNameValidation_UnicodeTreeID_Chinese(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error for Chinese tree ID, got: %v", err)
 	}
 }
 
 func TestNameValidation_UnicodeInstanceName_Japanese(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -291,7 +250,7 @@ func TestNameValidation_UnicodeInstanceName_Japanese(t *testing.T) {
 		    <AlwaysSuccess name="成功ノード"/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error for Japanese instance name, got: %v", err)
 	}
@@ -300,11 +259,7 @@ func TestNameValidation_UnicodeInstanceName_Japanese(t *testing.T) {
 // TestNameValidation_ValidSubTreePortName verifies valid subtree port names.
 // Equivalent of C++ NameValidationXMLTest/ValidSubTreePortName.
 func TestNameValidation_ValidSubTreePortName(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -320,7 +275,7 @@ func TestNameValidation_ValidSubTreePortName(t *testing.T) {
 		    </SubTree>
 		  </TreeNodesModel>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
@@ -330,11 +285,7 @@ func TestNameValidation_ValidSubTreePortName(t *testing.T) {
 // names with spaces in the TreeNodesModel are rejected.
 // Equivalent of C++ NameValidationXMLTest/InvalidSubTreePortName_WithSpace.
 func TestNameValidation_InvalidSubTreePortName_WithSpace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -347,7 +298,7 @@ func TestNameValidation_InvalidSubTreePortName_WithSpace(t *testing.T) {
 		    </SubTree>
 		  </TreeNodesModel>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Log("parser accepted port name with space (Go validation may differ from C++)")
 	}
@@ -357,11 +308,7 @@ func TestNameValidation_InvalidSubTreePortName_WithSpace(t *testing.T) {
 // port names starting with a digit in TreeNodesModel are rejected.
 // Equivalent of C++ NameValidationXMLTest/InvalidSubTreePortName_StartsWithDigit.
 func TestNameValidation_InvalidSubTreePortName_StartsWithDigit(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -374,7 +321,7 @@ func TestNameValidation_InvalidSubTreePortName_StartsWithDigit(t *testing.T) {
 		    </SubTree>
 		  </TreeNodesModel>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Log("parser accepted port name starting with digit (Go validation may differ from C++)")
 	}
@@ -385,11 +332,7 @@ func TestNameValidation_InvalidSubTreePortName_StartsWithDigit(t *testing.T) {
 // Equivalent of C++ NameValidationXMLTest/InvalidBehaviorTreeID_Root.
 // Note: The Go XML parser does not reject "Root" as a tree ID.
 func TestNameValidation_InvalidBehaviorTreeID_Root(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -397,7 +340,7 @@ func TestNameValidation_InvalidBehaviorTreeID_Root(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Go XML parser does not validate against "Root" as a tree ID.
 	// This test documents the current behavior.
 	if err != nil {
@@ -410,11 +353,7 @@ func TestNameValidation_InvalidBehaviorTreeID_Root(t *testing.T) {
 // Equivalent of C++ NameValidationXMLTest/InvalidBehaviorTreeID_root_lowercase.
 // Note: The Go XML parser does not reject "root" as a tree ID.
 func TestNameValidation_InvalidBehaviorTreeID_root_lowercase(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -422,7 +361,7 @@ func TestNameValidation_InvalidBehaviorTreeID_root_lowercase(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Go XML parser does not validate against "root" as a tree ID.
 	// This test documents the current behavior.
 	if err != nil {
@@ -434,11 +373,7 @@ func TestNameValidation_InvalidBehaviorTreeID_root_lowercase(t *testing.T) {
 // names with periods are allowed.
 // Equivalent of C++ NameValidationXMLTest/ValidInstanceName_WithPeriod.
 func TestNameValidation_ValidInstanceName_WithPeriod(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -446,7 +381,7 @@ func TestNameValidation_ValidInstanceName_WithPeriod(t *testing.T) {
 		    <AlwaysSuccess name="node.name"/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error for instance name with period, got: %v", err)
 	}
@@ -456,11 +391,7 @@ func TestNameValidation_ValidInstanceName_WithPeriod(t *testing.T) {
 // characters are allowed in tree IDs.
 // Equivalent of C++ NameValidationXMLTest/UnicodeTreeID_German.
 func TestNameValidation_UnicodeTreeID_German(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4">
@@ -468,7 +399,7 @@ func TestNameValidation_UnicodeTreeID_German(t *testing.T) {
 		    <AlwaysSuccess/>
 		  </BehaviorTree>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error for German tree ID, got: %v", err)
 	}
@@ -478,11 +409,7 @@ func TestNameValidation_UnicodeTreeID_German(t *testing.T) {
 // reserved attribute names like "ID" are rejected in port names.
 // Equivalent of C++ NameValidationXMLTest/InvalidSubTreePortName_Reserved.
 func TestNameValidation_InvalidSubTreePortName_Reserved(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 		<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -495,7 +422,7 @@ func TestNameValidation_InvalidSubTreePortName_Reserved(t *testing.T) {
 		    </SubTree>
 		  </TreeNodesModel>
 		</root>`
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Error("expected error for reserved port name 'ID', got none")
 	}

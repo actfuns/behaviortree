@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/script"
 )
 
 // ---------------------------------------------------------------------------
@@ -714,7 +716,7 @@ func (p *xmlParser) createNodeFromXML(element *xmlNode, blackboard *core.Blackbo
 	return newNode, nil
 }
 
-func setPreScript(node core.TreeNode, cond core.PreCond, script string) {
+func setPreScript(node core.TreeNode, cond core.PreCond, code string) {
 	// Access the treeNodeBase's PreScripts via the Config's method
 	// Use the treeNodeBase interface check with type assertion
 	type preScriptSetter interface {
@@ -722,17 +724,25 @@ func setPreScript(node core.TreeNode, cond core.PreCond, script string) {
 	}
 	if psNode, ok := node.(preScriptSetter); ok {
 		ps := psNode.PreScripts()
-		ps[cond] = core.ParseScriptExpr(script)
+		if fn, err := script.ParseScript(code); err == nil {
+			ps[cond] = fn
+		} else {
+			slog.Error("script parse error", "err", err)
+		}
 	}
 }
 
-func setPostScript(node core.TreeNode, cond core.PostCond, script string) {
+func setPostScript(node core.TreeNode, cond core.PostCond, code string) {
 	type postScriptSetter interface {
 		PostScripts() *core.PostScripts
 	}
 	if psNode, ok := node.(postScriptSetter); ok {
 		ps := psNode.PostScripts()
-		ps[cond] = core.ParseScriptExpr(script)
+		if fn, err := script.ParseScript(code); err == nil {
+			ps[cond] = fn
+		} else {
+			slog.Error("script parse error", "err", err)
+		}
 	}
 }
 

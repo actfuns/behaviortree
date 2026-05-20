@@ -1,10 +1,11 @@
-package control
+package factory_test
 
 import (
 	"strconv"
 	"testing"
 
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestComprehensive_ControlFlowMainTree covers: ReactiveSequence, Sequence,
@@ -94,11 +95,7 @@ func TestComprehensive_ControlFlowMainTree(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(mainXML, nil)
 	if err != nil {
@@ -238,11 +235,7 @@ func TestComprehensive_Parallel(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -272,11 +265,7 @@ func TestComprehensive_Async(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -317,11 +306,7 @@ func TestComprehensive_Loop(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -365,11 +350,7 @@ func TestComprehensive_UpdatedDecorator(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -403,11 +384,7 @@ func TestComprehensive_Precondition(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -449,11 +426,7 @@ func TestComprehensive_SubTree(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
@@ -477,11 +450,7 @@ func TestComprehensive_KeepRunningUntilFailure(t *testing.T) {
   </BehaviorTree>
 </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {

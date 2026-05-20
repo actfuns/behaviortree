@@ -1,11 +1,11 @@
-package control
+package control_test
 
 import (
 	"testing"
 
+	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -24,7 +24,7 @@ import (
 
 // simpleBBCondition returns a SimpleCondition that reads a bool from the
 // blackboard via an input port "value" and returns SUCCESS if true.
-func registerBBCondition(factory *core.BehaviorTreeFactory, name, portName string) {
+func registerBBCondition(factory core.BehaviorTreeFactory, name, portName string) {
 	_ = factory.RegisterNodeType(name, core.PortsList{
 		"value": core.NewPortInfo(core.INPUT),
 	}, func(nName string, config core.NodeConfig) core.TreeNode {
@@ -91,7 +91,7 @@ func (n *bbSetAction) Tick() core.NodeStatus {
 	return prevStatus
 }
 
-func registerBBSetAction(factory *core.BehaviorTreeFactory, name, blackboardKey string, successTicks int) {
+func registerBBSetAction(factory core.BehaviorTreeFactory, name, blackboardKey string, successTicks int) {
 	_ = factory.RegisterNodeType(name, core.PortsList{
 		"value": core.NewPortInfo(core.OUTPUT),
 	}, func(nName string, config core.NodeConfig) core.TreeNode {
@@ -111,7 +111,7 @@ func registerBBSetAction(factory *core.BehaviorTreeFactory, name, blackboardKey 
 
 // RegisterStandardBackchainingNodes registers all node types needed for
 // reactive backchaining tests.
-func RegisterStandardBackchainingNodes(factory *core.BehaviorTreeFactory) {
+func RegisterStandardBackchainingNodes(factory core.BehaviorTreeFactory) {
 	// IsWarm condition: reads from "is_warm" blackboard entry
 	registerBBCondition(factory, "IsWarm", "is_warm")
 
@@ -151,10 +151,7 @@ func TestReactiveBackchaining_EnsureWarm(t *testing.T) {
       </BehaviorTree>
     </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	RegisterStandardControlNodes(factory)
 	RegisterStandardBackchainingNodes(factory)
 
@@ -239,10 +236,7 @@ func TestReactiveBackchaining_EnsureWarmWithEnsureHoldingJacket(t *testing.T) {
       </BehaviorTree>
     </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	RegisterStandardControlNodes(factory)
 	RegisterStandardBackchainingNodes(factory)
 
@@ -323,16 +317,16 @@ func TestReactiveBackchaining_EnsureWarmWithEnsureHoldingJacket(t *testing.T) {
 // RegisterStandardControlNodes registers control flow nodes needed for
 // reactive backchaining tests. This is separate from RegisterStandardNodes
 // to avoid circular dependency with decorator package test nodes.
-func RegisterStandardControlNodes(factory *core.BehaviorTreeFactory) {
+func RegisterStandardControlNodes(factory core.BehaviorTreeFactory) {
 	_ = factory.RegisterNodeType("ReactiveSequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewReactiveSequence(name, config)
+		return control.NewReactiveSequence(name, config)
 	}, core.Control)
 
 	_ = factory.RegisterNodeType("ReactiveFallback", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewReactiveFallback(name, config)
+		return control.NewReactiveFallback(name, config)
 	}, core.Control)
 
 	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewSequenceNode(name, config)
+		return control.NewSequenceNode(name, config)
 	}, core.Control)
 }

@@ -3,10 +3,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // Motor is an interface for testing interface-based dependencies.
@@ -51,11 +49,7 @@ func (n *PathFollowNode) Tick() core.NodeStatus {
 
 func TestFactory_VirtualInterface(t *testing.T) {
 	motor := &LinearMotor{}
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	motorUsed := false
 	_ = factory.RegisterNodeType("PathFollow", core.PortsList{},

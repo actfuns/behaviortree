@@ -1,131 +1,12 @@
-package xml
+package xml_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/actfuns/behaviortree/action"
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	"github.com/actfuns/behaviortree/decorator"
-	_ "github.com/actfuns/behaviortree/script"
+	"github.com/actfuns/behaviortree/factory"
 )
-
-// registerCommonNodes registers node types commonly needed in XML-based tests.
-func registerCommonNodes(factory *core.BehaviorTreeFactory) {
-	// Control nodes
-	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewSequenceNode(name, config)
-	}, core.Control)
-
-	_ = factory.RegisterNodeType("Fallback", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewFallbackNode(name, config)
-	}, core.Control)
-
-	_ = factory.RegisterNodeType("ReactiveSequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewReactiveSequence(name, config)
-	}, core.Control)
-
-	_ = factory.RegisterNodeType("SequenceWithMemory", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewSequenceWithMemory(name, config)
-	}, core.Control)
-
-	_ = factory.RegisterNodeType("Parallel", core.PortsList{
-		"success_count": core.NewPortInfo(core.INPUT),
-		"failure_count": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewParallelNode(name, config)
-	}, core.Control)
-
-	_ = factory.RegisterNodeType("ParallelAll", core.PortsList{
-		"max_failures": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return control.NewParallelAllNode(name, config)
-	}, core.Control)
-
-	// Decorator nodes
-	_ = factory.RegisterNodeType("Inverter", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewInverterNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("ForceFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewForceFailureNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("ForceSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewForceSuccessNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("RunOnce", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewRunOnceNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("KeepRunningUntilFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewKeepRunningUntilFailureNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("Timeout", core.PortsList{
-		"msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewTimeoutNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("RetryUntilSuccessful", core.PortsList{
-		"num_attempts": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewRetryNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("Repeat", core.PortsList{
-		"num_cycles": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewRepeatNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("Delay", core.PortsList{
-		"delay_msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return decorator.NewDelayNode(name, config)
-	}, core.Decorator)
-
-	// Action nodes
-	_ = factory.RegisterNodeType("AlwaysSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewAlwaysSuccessNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("AlwaysFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewAlwaysFailureNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
-		"output_key": core.NewPortInfo(core.INPUT),
-		"value":      core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewSetBlackboardNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("Script", core.PortsList{
-		"code": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewScriptNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("ScriptCondition", core.PortsList{
-		"code": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewScriptCondition(name, config)
-	}, core.Condition)
-
-	_ = factory.RegisterNodeType("SaySomething", core.PortsList{
-		"message": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		n := &saySomethingNode{}
-		n.Init(name, config)
-		n.SetSelf(n)
-		n.SetRegistrationID("SaySomething")
-		return n
-	}, core.Action)
-}
 
 // ----------------------------------------------------------------
 // Existing test: TestMoveBaseRecovery
@@ -153,12 +34,7 @@ func TestMoveBaseRecovery(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	backSpinTick := 0
 	computeTick := 0
@@ -251,12 +127,7 @@ func TestNavigation_Basic(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("IsStuck", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		n := &stuckNode{}
@@ -322,12 +193,8 @@ func TestSubTree_SiblingPorts(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -358,12 +225,8 @@ func TestSubTree_GoodRemapping(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
 	_ = factory.RegisterNodeType("CopyPorts", core.PortsList{
 		"in":  core.NewPortInfo(core.INPUT),
@@ -419,12 +282,8 @@ func TestSubTree_SubtreePlusA(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
 	factory.RegisterBehaviorTreeFromText(xmlText)
 	tree, err := factory.CreateTree("MainTree", nil)
@@ -456,12 +315,8 @@ func TestSubTree_SubtreePlusB(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
 	factory.RegisterBehaviorTreeFromText(xmlText)
 	tree, err := factory.CreateTree("MainTree", nil)
@@ -493,12 +348,7 @@ func TestSubTree_SubtreeIssue592(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -544,12 +394,7 @@ func TestSubTree_SubtreeModels(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -574,12 +419,7 @@ func TestSubTree_StringConversions(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ModifyPose", core.PortsList{
 		"pose": core.NewPortInfo(core.INOUT),
@@ -623,14 +463,9 @@ func TestSubTree_RecursiveSubtree(t *testing.T) {
 	      </BehaviorTree>
 	  </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Note: Recursive subtree may or may not be detected")
 	}
@@ -647,12 +482,7 @@ func TestSubTree_SubstringAreNotRecursive(t *testing.T) {
 	      </BehaviorTree>
 	  </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -679,12 +509,7 @@ func TestSubTree_LiteralNumericPortsPreserveType(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -713,12 +538,7 @@ func TestSubTree_ScriptRemap(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterBehaviorTreeFromText(xmlText)
 	tree, err := factory.CreateTree("MainTree", nil)
@@ -745,14 +565,10 @@ func TestSubTree_SubtreeNameNotRegistered(t *testing.T) {
 	    </BehaviorTree>
 	  </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Go implementation may allow SubTree names matching node types")
 	}
@@ -781,14 +597,9 @@ func TestSubTree_RecursiveCycle(t *testing.T) {
 	      </BehaviorTree>
 	  </root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Go implementation may handle recursive cycles differently")
 	}
@@ -808,12 +619,7 @@ func TestSubTree_Issue653_SetBlackboard(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("Assert", core.PortsList{
 		"condition": core.NewPortInfo(core.INPUT),
@@ -863,12 +669,7 @@ func TestSubTree_Issue623_StringToPose2d(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("MoveBase", core.PortsList{
 		"goal": core.NewPortInfo(core.INPUT),
@@ -971,6 +772,19 @@ func (n *saySomethingNode) Tick() core.NodeStatus {
 // Newly added test types
 // ----------------------------------------------------------------
 
+// registerSaySomething registers the SaySomething action node on the given factory.
+func registerSaySomething(factory core.BehaviorTreeFactory) {
+	_ = factory.RegisterNodeType("SaySomething", core.PortsList{
+		"message": core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
+		n := &saySomethingNode{}
+		n.Init(name, config)
+		n.SetSelf(n)
+		n.SetRegistrationID("SaySomething")
+		return n
+	}, core.Action)
+}
+
 type readInConstructorNode struct {
 	core.SyncActionNode
 }
@@ -1067,12 +881,8 @@ func TestSubTree_BadRemapping(t *testing.T) {
 		    </BehaviorTree>
 		</root>`
 
-		factory, err := core.NewBehaviorTreeFactory()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		registerCommonNodes(factory)
+		factory := factory.NewBehaviorTreeFactory()
+		registerSaySomething(factory)
 
 		_ = factory.RegisterNodeType("CopyPorts", core.PortsList{
 			"in":  core.NewPortInfo(core.INPUT),
@@ -1110,12 +920,8 @@ func TestSubTree_BadRemapping(t *testing.T) {
 		    </BehaviorTree>
 		</root>`
 
-		factory, err := core.NewBehaviorTreeFactory()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		registerCommonNodes(factory)
+		factory := factory.NewBehaviorTreeFactory()
+		registerSaySomething(factory)
 
 		_ = factory.RegisterNodeType("CopyPorts", core.PortsList{
 			"in":  core.NewPortInfo(core.INPUT),
@@ -1155,12 +961,7 @@ func TestSubTree_SubtreePlusD(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ReadInConstructor", core.PortsList{
 		"message": core.NewPortInfo(core.INPUT),
@@ -1213,12 +1014,8 @@ func TestSubTree_SubtreeNav2_Issue563(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerSaySomething(factory)
 
 	_ = factory.RegisterNodeType("NaughtyNav2Node", core.PortsList{}, newNaughtyNav2Node, core.Action)
 
@@ -1261,12 +1058,7 @@ func TestSubTree_SubtreeNav2_Issue724(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("NaughtyNav2Node", core.PortsList{}, newNaughtyNav2Node, core.Action)
 
@@ -1309,12 +1101,7 @@ func TestSubTree_RemappingIssue696(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	console := make([]string, 0)
 	_ = factory.RegisterNodeType("PrintToConsole", core.PortsList{
@@ -1356,12 +1143,7 @@ func TestSubTree_PrivateAutoRemapping(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	console := make([]string, 0)
 	_ = factory.RegisterNodeType("PrintToConsole", core.PortsList{
@@ -1396,14 +1178,9 @@ func TestSubTree_DuplicateSubTreeName_Groot2Issue56(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Go implementation does not detect duplicate SubTree names (different from C++)")
 	} else {
@@ -1429,12 +1206,7 @@ func TestSubTree_UniqueSubTreeNames_WorksCorrectly(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -1465,12 +1237,7 @@ func TestSubTree_NoNameAttribute_AutoGeneratesUniquePaths(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	registerCommonNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
@@ -1501,14 +1268,9 @@ func TestSubTree_NestedDuplicateNames_ShouldFail(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Go implementation does not detect nested duplicate SubTree names (different from C++)")
 	} else {
@@ -1534,14 +1296,9 @@ func TestSubTree_DuplicateSubTreeName_ErrorMessage(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
-	registerCommonNodes(factory)
-
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
 		t.Logf("Error message: %v", err)
 	} else {

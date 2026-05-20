@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/script"
 	"log/slog"
 )
 
@@ -24,21 +25,21 @@ func NewScriptNode(name string, config core.NodeConfig) *ScriptNode {
 }
 
 func (n *ScriptNode) loadExecutor() {
-	script, err := core.GetInputTyped[string](n, "code")
+	code, err := core.GetInputTyped[string](n, "code")
 	if err != nil {
 		slog.Error("missing port [code] in Script")
 		return
 	}
-	if script == n.script {
+	if code == n.script {
 		return
 	}
-	executor := core.ParseScriptExpr(script)
-	if executor == nil {
-		slog.Error("script parse error")
+	fn, err := script.ParseScript(code)
+	if err != nil {
+		slog.Error("script parse error", "err", err)
 		return
 	}
-	n.executor = executor
-	n.script = script
+	n.executor = fn
+	n.script = code
 }
 
 func (n *ScriptNode) Tick() core.NodeStatus {

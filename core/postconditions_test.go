@@ -3,20 +3,14 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestPostConditionsBasic verifies that _onSuccess, _onFailure, and _post
 // post-condition scripts are executed at the appropriate times.
 func TestPostConditionsBasic(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -62,11 +56,7 @@ func TestPostConditionsBasic(t *testing.T) {
 // TestPostConditionsIssue539 verifies that _onFailure and _post fire on
 // every retry attempt in RetryUntilSuccessful.
 func TestPostConditionsIssue539(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -103,11 +93,7 @@ func TestPostConditionsIssue539(t *testing.T) {
 // TestPostConditionsIssue601 verifies that _onHalted fires when a sibling
 // causes a node to be halted in a Parallel node.
 func TestPostConditionsIssue601(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4" >

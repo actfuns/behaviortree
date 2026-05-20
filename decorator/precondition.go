@@ -1,15 +1,18 @@
 package decorator
 
 import (
-	"github.com/actfuns/behaviortree/core"
 	"log/slog"
+
+	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/script"
 )
 
 // PreconditionNode evaluates a script condition before ticking its child.
 // If the script in the "if" port returns true, the child is ticked.
-// If the script returns false, the node returns the status specified in the "else" port (FAILURE by default).
-// Once the child starts (returns RUNNING), subsequent ticks continue executing the child
-// without re-evaluating the precondition until completion.
+// If the script returns false, the node returns the status specified in the
+// "else" port (FAILURE by default). Once the child starts (returns RUNNING),
+// subsequent ticks continue executing the child without re-evaluating the
+// precondition until completion.
 type PreconditionNode struct {
 	core.DecoratorNode
 	script          string
@@ -27,18 +30,21 @@ func NewPreconditionNode(name string, config core.NodeConfig) *PreconditionNode 
 }
 
 func (n *PreconditionNode) loadExecutor() {
-	script, err := core.GetInputTyped[string](n, "if")
+	code, err := core.GetInputTyped[string](n, "if")
 	if err != nil {
 		slog.Error("Missing parameter [if] in Precondition")
 		return
 	}
-	if script == n.script {
+	if code == n.script {
 		return
 	}
-	// Parse script using the script parser
-	executor := core.ParseScriptExpr(script)
-	n.executor = executor
-	n.script = script
+	fn, err := script.ParseScript(code)
+	if err != nil {
+		slog.Error("script parse error", "err", err)
+		return
+	}
+	n.executor = fn
+	n.script = code
 }
 
 func (n *PreconditionNode) Tick() core.NodeStatus {
@@ -71,14 +77,13 @@ func (n *PreconditionNode) Tick() core.NodeStatus {
 	}
 
 	childStatus := n.Child().ExecuteTick()
-	if childStatus.IsCompleted() {
-		n.ResetChild()
-		n.childrenRunning = false
-	}
-	return childStatus
-}
 
-func (n *PreconditionNode) Halt() {
+	if childStatus == core.RUNNING {
+		n.SetStatus(core.RUNNING)
+		return core.RUNNING
+	}
+
 	n.childrenRunning = false
-	n.DecoratorNode.Halt()
+	n.Child().ResetStatus()
+	return childStatus
 }

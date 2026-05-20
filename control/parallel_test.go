@@ -1,12 +1,11 @@
-package control
+package control_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -21,11 +20,7 @@ import (
 // TestControl_Parallel_Async tests that a Parallel node with async children
 // waits for completion. Each async child is a Sequence { Sleep, AlwaysSuccess }.
 func TestControl_Parallel_Async(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -56,11 +51,7 @@ func TestControl_Parallel_Async(t *testing.T) {
 // TestControl_Parallel_Threshold3 tests Parallel with success_count=3.
 // Equivalent of C++ SimpleParallelTest/Threshold_3.
 func TestControl_Parallel_Threshold3(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -90,11 +81,7 @@ func TestControl_Parallel_Threshold3(t *testing.T) {
 // TestControl_Parallel_ThresholdNeg1 tests Parallel with success_count=-1
 // (all children must succeed). Equivalent of C++ SimpleParallelTest/Threshold_neg1.
 func TestControl_Parallel_ThresholdNeg1(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -128,11 +115,7 @@ func TestControl_Parallel_ThresholdNeg1(t *testing.T) {
 // failure_count=-1 (all children must fail).
 // Equivalent of C++ SimpleParallelTest/Threshold_thresholdFneg1.
 func TestControl_Parallel_FailureThresholdNeg1(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -165,11 +148,7 @@ func TestControl_Parallel_FailureThresholdNeg1(t *testing.T) {
 // TestControl_Parallel_Threshold2 tests Parallel with all sync children
 // and success_count=2. Equivalent of C++ SimpleParallelTest/Threshold_2.
 func TestControl_Parallel_Threshold2(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -194,11 +173,7 @@ func TestControl_Parallel_Threshold2(t *testing.T) {
 // TestControl_Parallel_Complex_ConditionsTrue tests nested Parallel nodes.
 // Equivalent of C++ ComplexParallelTest/ConditionsTrue.
 func TestControl_Parallel_Complex_ConditionsTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -240,11 +215,7 @@ func TestControl_Parallel_Complex_ConditionsTrue(t *testing.T) {
 // where the left sub-parallel fails.
 // Equivalent of C++ ComplexParallelTest/ConditionsLeftFalse.
 func TestControl_Parallel_Complex_ConditionsLeftFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -284,11 +255,7 @@ func TestControl_Parallel_Complex_ConditionsLeftFalse(t *testing.T) {
 // where the right sub-parallel immediately fails.
 // Equivalent of C++ ComplexParallelTest/ConditionRightFalse.
 func TestControl_Parallel_Complex_ConditionRightFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -325,11 +292,7 @@ func TestControl_Parallel_Complex_ConditionRightFalse(t *testing.T) {
 // Parallel where right sub-parallel has failure_count=2.
 // Equivalent of C++ ComplexParallelTest/ConditionRightFalse_thresholdF_2.
 func TestControl_Parallel_Complex_ConditionRightFalseThreshold2(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -368,11 +331,7 @@ func TestControl_Parallel_Complex_ConditionRightFalseThreshold2(t *testing.T) {
 // TestControl_Parallel_FailingParallel tests with Good/Bad/Slow nodes.
 // Equivalent of C++ Parallel/FailingParallel.
 func TestControl_Parallel_FailingParallel(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -404,13 +363,8 @@ func TestControl_Parallel_FailingParallel(t *testing.T) {
 // TestControl_Parallel_ParallelAll tests the ParallelAll node with different
 // max_failures values. Equivalent of C++ Parallel/ParallelAll.
 func TestControl_Parallel_ParallelAll(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
-	// Test 1: max_failures=1, one failure => FAILURE
 	xml1 := `
 	<root BTCPP_format="4">
 	  <BehaviorTree ID="MainTree">
@@ -468,11 +422,7 @@ func TestControl_Parallel_ParallelAll(t *testing.T) {
 // TestControl_Parallel_Issue593 verifies Parallel with _skipIf skips correctly.
 // Equivalent of C++ Parallel/Issue593.
 func TestControl_Parallel_Issue593(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	var testTickCount int
 	_ = factory.RegisterSimpleAction("TestA", func(core.TreeNode) core.NodeStatus {
@@ -506,11 +456,7 @@ func TestControl_Parallel_Issue593(t *testing.T) {
 // TestControl_Parallel_PauseWithRetry tests a retry loop inside Parallel.
 // Equivalent of C++ Parallel/PauseWithRetry.
 func TestControl_Parallel_PauseWithRetry(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -556,11 +502,7 @@ func TestControl_Parallel_PauseWithRetry(t *testing.T) {
 func TestControl_Parallel_Issue819_SequenceVsReactiveSequence(t *testing.T) {
 	// Test 1: Regular Sequence - condition NOT re-evaluated
 	t.Run("Sequence", func(t *testing.T) {
-		factory, err := core.NewBehaviorTreeFactory()
-		if err != nil {
-			t.Fatal(err)
-		}
-		RegisterStandardNodes(factory)
+		factory := factory.NewBehaviorTreeFactory()
 
 		var tickCount1, tickCount2 int
 
@@ -623,11 +565,7 @@ func TestControl_Parallel_Issue819_SequenceVsReactiveSequence(t *testing.T) {
 
 	// Test 2: ReactiveSequence - condition IS re-evaluated every tick
 	t.Run("ReactiveSequence", func(t *testing.T) {
-		factory, err := core.NewBehaviorTreeFactory()
-		if err != nil {
-			t.Fatal(err)
-		}
-		RegisterStandardNodes(factory)
+		factory := factory.NewBehaviorTreeFactory()
 
 		var tickCount1, tickCount2 int
 

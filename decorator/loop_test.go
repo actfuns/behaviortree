@@ -1,4 +1,4 @@
-package decorator
+package decorator_test
 
 import (
 	"strconv"
@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/decorator"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -21,26 +22,6 @@ import (
 // We adapt tests that rely on C++ template types or features not
 // present in the Go implementation (e.g., SharedQueue<T> from
 // blackboard) to semantically equivalent Go tests.
-
-// registerLoopTypes registers LoopInt and related node types
-// needed for XML-based LoopNode tests.
-func registerLoopTypes(factory *core.BehaviorTreeFactory) {
-	registerLoopIntType(factory)
-	registerLoopDoubleType(factory)
-	registerLoopStringType(factory)
-	registerLoopBoolType(factory)
-}
-
-func registerLoopIntType(factory *core.BehaviorTreeFactory) {
-	_ = factory.RegisterNodeType("LoopInt", core.PortsList{
-		"queue":    core.NewPortInfo(core.INPUT),
-		"value":    core.NewPortInfo(core.OUTPUT),
-		"if_empty": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		n := NewLoopNode(name, config)
-		return n
-	}, core.Decorator)
-}
 
 // LoopDoubleNode handles float64 queues.
 type LoopDoubleNode struct {
@@ -143,16 +124,6 @@ func (n *LoopDoubleNode) Halt() {
 	n.DecoratorNode.Halt()
 }
 
-func registerLoopDoubleType(factory *core.BehaviorTreeFactory) {
-	_ = factory.RegisterNodeType("LoopDouble", core.PortsList{
-		"queue":    core.NewPortInfo(core.INPUT),
-		"value":    core.NewPortInfo(core.OUTPUT),
-		"if_empty": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewLoopDoubleNode(name, config)
-	}, core.Decorator)
-}
-
 // LoopStringNode handles string queues.
 type LoopStringNode struct {
 	core.DecoratorNode
@@ -250,16 +221,6 @@ func (n *LoopStringNode) Halt() {
 	n.queue = nil
 	n.queueSet = false
 	n.DecoratorNode.Halt()
-}
-
-func registerLoopStringType(factory *core.BehaviorTreeFactory) {
-	_ = factory.RegisterNodeType("LoopString", core.PortsList{
-		"queue":    core.NewPortInfo(core.INPUT),
-		"value":    core.NewPortInfo(core.OUTPUT),
-		"if_empty": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewLoopStringNode(name, config)
-	}, core.Decorator)
 }
 
 // LoopBoolNode handles bool queues.
@@ -363,12 +324,42 @@ func (n *LoopBoolNode) Halt() {
 	n.DecoratorNode.Halt()
 }
 
-func registerLoopBoolType(factory *core.BehaviorTreeFactory) {
-	_ = factory.RegisterNodeType("LoopBool", core.PortsList{
+// registerLoopVariants registers LoopInt, LoopDouble, LoopString, and LoopBool
+// as decorator node types backed by their respective loop implementations.
+func registerLoopVariants(factory core.BehaviorTreeFactory) {
+	intPorts := core.PortsList{
 		"queue":    core.NewPortInfo(core.INPUT),
-		"value":    core.NewPortInfo(core.OUTPUT),
 		"if_empty": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
+		"value":    core.NewPortInfo(core.OUTPUT),
+	}
+	_ = factory.RegisterNodeType("LoopInt", intPorts, func(name string, config core.NodeConfig) core.TreeNode {
+		return decorator.NewLoopNode(name, config)
+	}, core.Decorator)
+
+	doublePorts := core.PortsList{
+		"queue":    core.NewPortInfo(core.INPUT),
+		"if_empty": core.NewPortInfo(core.INPUT),
+		"value":    core.NewPortInfo(core.OUTPUT),
+	}
+	_ = factory.RegisterNodeType("LoopDouble", doublePorts, func(name string, config core.NodeConfig) core.TreeNode {
+		return NewLoopDoubleNode(name, config)
+	}, core.Decorator)
+
+	stringPorts := core.PortsList{
+		"queue":    core.NewPortInfo(core.INPUT),
+		"if_empty": core.NewPortInfo(core.INPUT),
+		"value":    core.NewPortInfo(core.OUTPUT),
+	}
+	_ = factory.RegisterNodeType("LoopString", stringPorts, func(name string, config core.NodeConfig) core.TreeNode {
+		return NewLoopStringNode(name, config)
+	}, core.Decorator)
+
+	boolPorts := core.PortsList{
+		"queue":    core.NewPortInfo(core.INPUT),
+		"if_empty": core.NewPortInfo(core.INPUT),
+		"value":    core.NewPortInfo(core.OUTPUT),
+	}
+	_ = factory.RegisterNodeType("LoopBool", boolPorts, func(name string, config core.NodeConfig) core.TreeNode {
 		return NewLoopBoolNode(name, config)
 	}, core.Decorator)
 }
@@ -444,11 +435,8 @@ func parseLoopStringQueue(queueStr string) []string {
 // ============ LoopNode with static int queue ============
 
 func TestLoopStaticIntQueue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]int, 0)
 	ports := core.PortsList{
@@ -507,11 +495,8 @@ func TestLoopEmptyQueueReturnsSuccess(t *testing.T) {
 	// For empty queue, the current LoopNode implementation
 	// falls through to tick the child. This test verifies that
 	// an empty queue string results in ticking the child once.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("CountTicks", func(core.TreeNode) core.NodeStatus {
@@ -547,11 +532,8 @@ func TestLoopEmptyQueueReturnsSuccess(t *testing.T) {
 // ============ LoopNode with child failure ============
 
 func TestLoopChildFailureStopsLoop(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("FailOnThird", func(core.TreeNode) core.NodeStatus {
@@ -593,11 +575,8 @@ func TestLoopDynamicQueueFromBlackboard(t *testing.T) {
 	// When the queue value is a blackboard pointer (e.g. "{my_queue}"),
 	// it resolves the string from the blackboard.
 	// We set up a string "10;20;30" on the blackboard for the queue.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]int, 0)
 	ports := core.PortsList{
@@ -650,11 +629,8 @@ func TestLoopDynamicQueueFromBlackboard(t *testing.T) {
 // ============ LoopNode restart behavior ============
 
 func TestLoopRestartAfterCompletion(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("CountTicks", func(core.TreeNode) core.NodeStatus {
@@ -704,7 +680,7 @@ func TestLoopDirectConstruction(t *testing.T) {
 	// This verifies the loop mechanism without XML parsing.
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["queue"] = "1;2;3"
-	loop := NewLoopNode("loop", cfg)
+	loop := decorator.NewLoopNode("loop", cfg)
 
 	tickCount := 0
 	action := RegisterTickCounter("action", &tickCount)
@@ -749,11 +725,8 @@ func (n *simpleCountAction) Tick() core.NodeStatus {
 func TestLoopHaltDuringExecution(t *testing.T) {
 	// Verify that halting the loop mid-execution works correctly
 	// and the loop can be restarted.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("SlowTick", func(core.TreeNode) core.NodeStatus {
@@ -796,11 +769,8 @@ func TestLoopHaltDuringExecution(t *testing.T) {
 // ============ LoopNode with static double queue ============
 
 func TestLoopStaticDoubleQueue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]float64, 0)
 	ports := core.PortsList{
@@ -850,11 +820,8 @@ func TestLoopStaticDoubleQueue(t *testing.T) {
 // ============ LoopNode with static string queue ============
 
 func TestLoopStaticStringQueue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]string, 0)
 	ports := core.PortsList{
@@ -904,11 +871,8 @@ func TestLoopStaticStringQueue(t *testing.T) {
 // ============ LoopNode with empty queue returning FAILURE ============
 
 func TestLoopEmptyQueueReturnsFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("CountTicks", func(core.TreeNode) core.NodeStatus {
@@ -943,11 +907,8 @@ func TestLoopEmptyQueueReturnsFailure(t *testing.T) {
 // ============ LoopNode with empty queue returning SKIPPED ============
 
 func TestLoopEmptyQueueReturnsSkipped(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	tickCount := 0
 	_ = factory.RegisterSimpleAction("CountTicks", func(core.TreeNode) core.NodeStatus {
@@ -986,11 +947,8 @@ func TestLoopVectorInput_Issue969(t *testing.T) {
 	// In Go, we set a semicolon-delimited string on the blackboard that the
 	// LoopInt node will parse. This verifies that a blackboard-based queue
 	// (which was originally a vector in C++) works correctly.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]int, 0)
 	ports := core.PortsList{
@@ -1043,11 +1001,8 @@ func TestLoopVectorInput_Issue969(t *testing.T) {
 // ============ LoopNode with bool queue ============
 
 func TestLoopBoolQueue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerLoopTypes(factory)
+	factory := factory.NewBehaviorTreeFactory()
+	registerLoopVariants(factory)
 
 	receivedValues := make([]bool, 0)
 	ports := core.PortsList{

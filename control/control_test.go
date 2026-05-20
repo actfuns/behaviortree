@@ -1,11 +1,11 @@
-package control
+package control_test
 
 import (
 	"testing"
 
+	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // ============================================================================
@@ -59,7 +59,7 @@ func (n *runningNode) Tick() core.NodeStatus {
 // registerRunningAction registers a node type that returns RUNNING for `runTicks`
 // ticks then completes with `finalStatus`. It returns the tick counter so tests
 // can inspect it.
-func registerRunningAction(factory *core.BehaviorTreeFactory, id string, finalStatus core.NodeStatus, runTicks int) *int {
+func registerRunningAction(factory core.BehaviorTreeFactory, id string, finalStatus core.NodeStatus, runTicks int) *int {
 	tickCount := 0
 	target := &tickCount
 	_ = factory.RegisterNodeType(id, core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
@@ -123,11 +123,7 @@ func (n *runningConditionNode) Tick() core.NodeStatus {
 // SUCCESS, the FallbackNode returns SUCCESS and the action is NOT executed.
 // Equivalent of C++ SimpleFallbackTest.ConditionTrue.
 func TestControl_Fallback_ConditionTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -154,11 +150,7 @@ func TestControl_Fallback_ConditionTrue(t *testing.T) {
 // FAILURE, the FallbackNode ticks the action.
 // Equivalent of C++ SimpleFallbackWithMemoryTest.ConditionFalse.
 func TestControl_Fallback_ConditionFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -186,11 +178,7 @@ func TestControl_Fallback_ConditionFalse(t *testing.T) {
 // (non-reactive).
 // Equivalent of C++ SimpleFallbackTest.ConditionChangeWhileRunning.
 func TestControl_Fallback_ConditionChangeWhileRunning(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Condition: initially FAILURE, then SUCCESS
 	conditionResult := core.FAILURE
@@ -236,11 +224,7 @@ func TestControl_Fallback_ConditionChangeWhileRunning(t *testing.T) {
 // TestControl_Fallback_AllChildrenFail verifies that when all children fail,
 // FallbackNode returns FAILURE.
 func TestControl_Fallback_AllChildrenFail(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -265,11 +249,7 @@ func TestControl_Fallback_AllChildrenFail(t *testing.T) {
 
 // TestControl_Fallback_FirstChildSucceeds verifies Fallback short-circuits on SUCCESS.
 func TestControl_Fallback_FirstChildSucceeds(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -296,11 +276,7 @@ func TestControl_Fallback_FirstChildSucceeds(t *testing.T) {
 // Fallback nodes where all conditions are true.
 // Equivalent of C++ ComplexFallbackWithMemoryTest.ConditionsTrue.
 func TestControl_Fallback_ComplexConditionsTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -333,11 +309,7 @@ func TestControl_Fallback_ComplexConditionsTrue(t *testing.T) {
 // first condition fails but second succeeds.
 // Equivalent of C++ ComplexFallbackWithMemoryTest.Condition1False.
 func TestControl_Fallback_ComplexCondition1False(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -367,11 +339,7 @@ func TestControl_Fallback_ComplexCondition1False(t *testing.T) {
 // all conditions failatch, then an async action runs.
 // Equivalent of C++ ComplexFallbackWithMemoryTest.ConditionsFalse.
 func TestControl_Fallback_ComplexConditionsFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "RunningAction", core.SUCCESS, 1)
 
@@ -406,11 +374,7 @@ func TestControl_Fallback_ComplexConditionsFalse(t *testing.T) {
 // change from FAILURE to SUCCESS is ignored (non-reactive memory).
 // Equivalent of C++ ComplexFallbackWithMemoryTest.Conditions1ToTrue.
 func TestControl_Fallback_ComplexCondition1ToTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	condResult := core.FAILURE
 	_ = factory.RegisterSimpleCondition("MyCondition", func(core.TreeNode) core.NodeStatus {
@@ -455,11 +419,7 @@ func TestControl_Fallback_ComplexCondition1ToTrue(t *testing.T) {
 // re-evaluation when condition 1 changes to true.
 // Equivalent of C++ ReactiveFallbackTest.Condition1ToTrue.
 func TestControl_Fallback_ReactiveCondition1ToTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	cond1Result := core.FAILURE
 	cond2Result := core.FAILURE
@@ -510,11 +470,7 @@ func TestControl_Fallback_ReactiveCondition1ToTrue(t *testing.T) {
 // where second condition changes to true.
 // Equivalent of C++ ReactiveFallbackTest.Condition2ToTrue.
 func TestControl_Fallback_ReactiveCondition2ToTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	cond1Result := core.FAILURE
 	cond2Result := core.FAILURE
@@ -565,11 +521,7 @@ func TestControl_Fallback_ReactiveCondition2ToTrue(t *testing.T) {
 // first child succeeds immediately.
 // Equivalent of C++ Reactive.ReactiveFallback_FirstChildSucceeds.
 func TestControl_Fallback_ReactiveFirstChildSucceeds(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -596,11 +548,7 @@ func TestControl_Fallback_ReactiveFirstChildSucceeds(t *testing.T) {
 // all children fail.
 // Equivalent of C++ Reactive.ReactiveFallback_AllChildrenFail.
 func TestControl_Fallback_ReactiveAllChildrenFail(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -628,11 +576,7 @@ func TestControl_Fallback_ReactiveAllChildrenFail(t *testing.T) {
 // where first child fails but second succeeds.
 // Equivalent of C++ Reactive.ReactiveFallback_SecondChildSucceeds.
 func TestControl_Fallback_ReactiveSecondChildSucceeds(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -663,11 +607,7 @@ func TestControl_Fallback_ReactiveSecondChildSucceeds(t *testing.T) {
 // that returns SUCCESS, then an async action runs.
 // Equivalent of C++ SimpleSequenceTest.ConditionTrue.
 func TestControl_Sequence_ConditionTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "RunningAction", core.SUCCESS, 1)
 
@@ -698,11 +638,7 @@ func TestControl_Sequence_ConditionTrue(t *testing.T) {
 // the action is running).
 // Equivalent of C++ SimpleSequenceTest.ConditionTurnToFalse.
 func TestControl_Sequence_ConditionTurnToFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	condResult := core.SUCCESS
 	_ = factory.RegisterSimpleCondition("MyCondition", func(core.TreeNode) core.NodeStatus {
@@ -745,11 +681,7 @@ func TestControl_Sequence_ConditionTurnToFalse(t *testing.T) {
 // TestControl_Sequence_TripleAction verifies multiple async actions in sequence.
 // Equivalent of C++ SequenceTripleActionTest.TripleAction.
 func TestControl_Sequence_TripleAction(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "ActionA", core.SUCCESS, 1)
 	registerRunningAction(factory, "ActionB", core.SUCCESS, 1)
@@ -781,11 +713,7 @@ func TestControl_Sequence_TripleAction(t *testing.T) {
 // a nested Sequence of conditions, then an async action.
 // Equivalent of C++ ComplexSequenceTest.ComplexSequenceConditionsTrue.
 func TestControl_Sequence_ComplexConditionsTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "RunningAction", core.SUCCESS, 1)
 
@@ -817,11 +745,7 @@ func TestControl_Sequence_ComplexConditionsTrue(t *testing.T) {
 // condition 1 changes to FAILURE.
 // Equivalent of C++ ComplexSequenceTest.ComplexSequenceConditions1ToFalse.
 func TestControl_Sequence_ComplexConditions1ToFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	cond1Result := core.SUCCESS
 	_ = factory.RegisterSimpleCondition("Cond1", func(core.TreeNode) core.NodeStatus {
@@ -868,11 +792,7 @@ func TestControl_Sequence_ComplexConditions1ToFalse(t *testing.T) {
 // condition 2 changes to FAILURE.
 // Equivalent of C++ ComplexSequenceTest.ComplexSequenceConditions2ToFalse.
 func TestControl_Sequence_ComplexConditions2ToFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	cond2Result := core.SUCCESS
 	_ = factory.RegisterSimpleCondition("Cond2", func(core.TreeNode) core.NodeStatus {
@@ -919,11 +839,7 @@ func TestControl_Sequence_ComplexConditions2ToFalse(t *testing.T) {
 // with a condition that succeeds, then an async action.
 // Equivalent of C++ SimpleSequenceWithMemoryTest.ConditionTrue.
 func TestControl_Sequence_WithMemoryConditionTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "RunningAction", core.SUCCESS, 1)
 
@@ -952,11 +868,7 @@ func TestControl_Sequence_WithMemoryConditionTrue(t *testing.T) {
 // SequenceWithMemory ignores condition changes (it has memory).
 // Equivalent of C++ SimpleSequenceWithMemoryTest.ConditionTurnToFalse.
 func TestControl_Sequence_WithMemoryConditionTurnToFalse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	condResult := core.SUCCESS
 	_ = factory.RegisterSimpleCondition("MyCondition", func(core.TreeNode) core.NodeStatus {
@@ -1000,11 +912,7 @@ func TestControl_Sequence_WithMemoryConditionTurnToFalse(t *testing.T) {
 // SequenceWithMemory with two levels.
 // Equivalent of C++ ComplexSequenceWithMemoryTest.ConditionsTrue.
 func TestControl_Sequence_ComplexWithMemoryConditionsTrue(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "RunningAction", core.SUCCESS, 1)
 	registerRunningAction(factory, "RunningAction2", core.SUCCESS, 1)
@@ -1040,11 +948,7 @@ func TestControl_Sequence_ComplexWithMemoryConditionsTrue(t *testing.T) {
 // using RegisterTestTick.
 // Equivalent of C++ SequenceWithMemoryTest.Issue_636.
 func TestControl_Sequence_Issue_636(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1100,11 +1004,7 @@ func TestControl_Sequence_Issue_636(t *testing.T) {
 // preceding children are re-ticked.
 // Equivalent of C++ Reactive.RunningChildren (adapted: no AsyncSequence in Go).
 func TestControl_Reactive_RunningChildren(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 4)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1162,11 +1062,7 @@ func TestControl_Reactive_RunningChildren(t *testing.T) {
 // TestControl_Reactive_Issue587 tests that _skipIf works with ReactiveSequence.
 // Equivalent of C++ Reactive.Issue587.
 func TestControl_Reactive_Issue587(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1212,11 +1108,7 @@ func TestControl_Reactive_Issue587(t *testing.T) {
 // TestA (sync action) is ticked multiple times while async child runs.
 // Equivalent of C++ Reactive.TestLogging.
 func TestControl_Reactive_TestLogging(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1253,17 +1145,13 @@ func TestControl_Reactive_TestLogging(t *testing.T) {
 // mode is enabled.
 // Equivalent of C++ Reactive.TwoAsyncNodesInReactiveSequence.
 func TestControl_Reactive_TwoAsyncNodesInReactiveSequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "Async1", core.SUCCESS, 2)
 	registerRunningAction(factory, "Async2", core.SUCCESS, 2)
 
 	// Enable the exception for multiple running children
-	ReactiveSequenceEnableException(true)
+	control.ReactiveSequenceEnableException(true)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1300,18 +1188,14 @@ func TestControl_Reactive_TwoAsyncNodesInReactiveSequence(t *testing.T) {
 	}
 
 	// Reset to default
-	ReactiveSequenceEnableException(false)
+	control.ReactiveSequenceEnableException(false)
 }
 
 // TestControl_Reactive_FirstChildFails tests ReactiveSequence where first
 // child fails immediately.
 // Equivalent of C++ Reactive.ReactiveSequence_FirstChildFails.
 func TestControl_Reactive_FirstChildFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1344,11 +1228,7 @@ func TestControl_Reactive_FirstChildFails(t *testing.T) {
 // children succeed.
 // Equivalent of C++ Reactive.ReactiveSequence_AllChildrenSucceed.
 func TestControl_Reactive_AllChildrenSucceed(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1388,11 +1268,7 @@ func TestControl_Reactive_AllChildrenSucceed(t *testing.T) {
 // a ReactiveSequence are re-evaluated on every tick.
 // Equivalent of C++ Reactive.ReactiveSequence_ReEvaluatesOnEveryTick.
 func TestControl_Reactive_ReEvaluatesOnEveryTick(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	conditionTickCount := 0
 	_ = factory.RegisterSimpleCondition("CountingCondition", func(core.TreeNode) core.NodeStatus {
@@ -1430,11 +1306,7 @@ func TestControl_Reactive_ReEvaluatesOnEveryTick(t *testing.T) {
 // are halted when a preceding condition changes.
 // Equivalent of C++ Reactive.ReactiveSequence_HaltOnConditionChange.
 func TestControl_Reactive_HaltOnConditionChange(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	conditionResult := true
 	childTickCount := 0
@@ -1555,11 +1427,7 @@ func (n *trackingAction) Halt() {
 // is true, the "then" branch is executed.
 // Equivalent of C++ IfThenElseTest.ConditionTrue_ThenBranch.
 func TestControl_IfThenElse_ConditionTrue_ThenBranch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1596,11 +1464,7 @@ func TestControl_IfThenElse_ConditionTrue_ThenBranch(t *testing.T) {
 // condition is false, the "else" branch is executed.
 // Equivalent of C++ IfThenElseTest.ConditionFalse_ElseBranch.
 func TestControl_IfThenElse_ConditionFalse_ElseBranch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1637,11 +1501,7 @@ func TestControl_IfThenElse_ConditionFalse_ElseBranch(t *testing.T) {
 // 2 children and condition false, IfThenElse returns FAILURE.
 // Equivalent of C++ IfThenElseTest.ConditionFalse_TwoChildren_ReturnsFailure.
 func TestControl_IfThenElse_ConditionFalse_TwoChildren(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1674,11 +1534,7 @@ func TestControl_IfThenElse_ConditionFalse_TwoChildren(t *testing.T) {
 // fails, IfThenElse returns FAILURE.
 // Equivalent of C++ IfThenElseTest.ThenBranchFails.
 func TestControl_IfThenElse_ThenBranchFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1712,11 +1568,7 @@ func TestControl_IfThenElse_ThenBranchFails(t *testing.T) {
 // fails, IfThenElse returns FAILURE.
 // Equivalent of C++ IfThenElseTest.ElseBranchFails.
 func TestControl_IfThenElse_ElseBranchFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1750,11 +1602,7 @@ func TestControl_IfThenElse_ElseBranchFails(t *testing.T) {
 // RUNNING first, then SUCCESS.
 // Equivalent of C++ IfThenElseTest.ConditionRunning.
 func TestControl_IfThenElse_ConditionRunning(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	conditionTicks := 0
 	_ = factory.RegisterSimpleCondition("RunningThenSuccess", func(core.TreeNode) core.NodeStatus {
@@ -1806,11 +1654,7 @@ func TestControl_IfThenElse_ConditionRunning(t *testing.T) {
 // TestControl_IfThenElse_HaltBehavior verifies that halt/reset works.
 // Equivalent of C++ IfThenElseTest.HaltBehavior.
 func TestControl_IfThenElse_HaltBehavior(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1857,11 +1701,7 @@ func TestControl_IfThenElse_HaltBehavior(t *testing.T) {
 // with only 1 child returns FAILURE at runtime.
 // Equivalent of C++ IfThenElseTest.InvalidChildCount_One.
 func TestControl_IfThenElse_InvalidChildCount_One(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1887,11 +1727,7 @@ func TestControl_IfThenElse_InvalidChildCount_One(t *testing.T) {
 // with 4 children returns FAILURE at runtime.
 // Equivalent of C++ IfThenElseTest.InvalidChildCount_Four.
 func TestControl_IfThenElse_InvalidChildCount_Four(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1924,11 +1760,7 @@ func TestControl_IfThenElse_InvalidChildCount_Four(t *testing.T) {
 // is true, the "do" branch is executed.
 // Equivalent of C++ WhileDoElseTest.ConditionTrue_DoBranch.
 func TestControl_WhileDoElse_ConditionTrue_DoBranch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -1965,11 +1797,7 @@ func TestControl_WhileDoElse_ConditionTrue_DoBranch(t *testing.T) {
 // condition is false, the "else" branch is executed.
 // Equivalent of C++ WhileDoElseTest.ConditionFalse_ElseBranch.
 func TestControl_WhileDoElse_ConditionFalse_ElseBranch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2006,11 +1834,7 @@ func TestControl_WhileDoElse_ConditionFalse_ElseBranch(t *testing.T) {
 // 2 children and condition false, WhileDoElse returns FAILURE.
 // Equivalent of C++ WhileDoElseTest.ConditionFalse_TwoChildren_ReturnsFailure.
 func TestControl_WhileDoElse_ConditionFalse_TwoChildren(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2043,11 +1867,7 @@ func TestControl_WhileDoElse_ConditionFalse_TwoChildren(t *testing.T) {
 // WhileDoElse returns FAILURE.
 // Equivalent of C++ WhileDoElseTest.DoBranchFails.
 func TestControl_WhileDoElse_DoBranchFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2081,11 +1901,7 @@ func TestControl_WhileDoElse_DoBranchFails(t *testing.T) {
 // fails, WhileDoElse returns FAILURE.
 // Equivalent of C++ WhileDoElseTest.ElseBranchFails.
 func TestControl_WhileDoElse_ElseBranchFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2119,11 +1935,7 @@ func TestControl_WhileDoElse_ElseBranchFails(t *testing.T) {
 // change from false to true halts else branch (WhileDoElse is reactive).
 // Equivalent of C++ WhileDoElseTest.ConditionChanges_HaltsElse.
 func TestControl_WhileDoElse_ConditionChanges_HaltsElse(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	conditionCounter := 0
 	_ = factory.RegisterSimpleCondition("ToggleCondition", func(core.TreeNode) core.NodeStatus {
@@ -2170,11 +1982,7 @@ func TestControl_WhileDoElse_ConditionChanges_HaltsElse(t *testing.T) {
 // change from true to false halts do branch.
 // Equivalent of C++ WhileDoElseTest.ConditionChanges_HaltsDo.
 func TestControl_WhileDoElse_ConditionChanges_HaltsDo(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	conditionCounter := 0
 	_ = factory.RegisterSimpleCondition("ToggleCondition2", func(core.TreeNode) core.NodeStatus {
@@ -2220,11 +2028,7 @@ func TestControl_WhileDoElse_ConditionChanges_HaltsDo(t *testing.T) {
 // TestControl_WhileDoElse_HaltBehavior verifies that halt works properly.
 // Equivalent of C++ WhileDoElseTest.HaltBehavior.
 func TestControl_WhileDoElse_HaltBehavior(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2271,11 +2075,7 @@ func TestControl_WhileDoElse_HaltBehavior(t *testing.T) {
 // with only 1 child returns FAILURE at runtime.
 // Equivalent of C++ WhileDoElseTest.InvalidChildCount_One.
 func TestControl_WhileDoElse_InvalidChildCount_One(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2301,11 +2101,7 @@ func TestControl_WhileDoElse_InvalidChildCount_One(t *testing.T) {
 // with 4 children returns FAILURE at runtime.
 // Equivalent of C++ WhileDoElseTest.InvalidChildCount_Four.
 func TestControl_WhileDoElse_InvalidChildCount_Four(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2334,11 +2130,7 @@ func TestControl_WhileDoElse_InvalidChildCount_Four(t *testing.T) {
 // that returns RUNNING first, then SUCCESS.
 // Equivalent of C++ WhileDoElseTest.ConditionRunning.
 func TestControl_WhileDoElse_ConditionRunning(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	firstTick := true
 	_ = factory.RegisterSimpleCondition("RunningThenSuccess", func(core.TreeNode) core.NodeStatus {
@@ -2398,11 +2190,7 @@ func TestControl_WhileDoElse_ConditionRunning(t *testing.T) {
 // the default case (last child) is executed.
 // Equivalent of C++ SwitchTest.DefaultCase.
 func TestControl_Switch_DefaultCase(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2430,11 +2218,7 @@ func TestControl_Switch_DefaultCase(t *testing.T) {
 // TestControl_Switch_Case1 verifies matching the first case.
 // Equivalent of C++ SwitchTest.Case1.
 func TestControl_Switch_Case1(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2464,11 +2248,7 @@ func TestControl_Switch_Case1(t *testing.T) {
 // TestControl_Switch_Case2 verifies matching the second case.
 // Equivalent of C++ SwitchTest.Case2.
 func TestControl_Switch_Case2(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2499,11 +2279,7 @@ func TestControl_Switch_Case2(t *testing.T) {
 // to the default child.
 // Equivalent of C++ SwitchTest.CaseNone.
 func TestControl_Switch_CaseNone(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2535,11 +2311,7 @@ func TestControl_Switch_CaseNone(t *testing.T) {
 // on the next tick since the running child is halted).
 // Equivalent of C++ SwitchTest.CaseSwitchToDefault.
 func TestControl_Switch_CaseSwitchToDefault(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "Running1", core.SUCCESS, 2)
 
@@ -2582,11 +2354,7 @@ func TestControl_Switch_CaseSwitchToDefault(t *testing.T) {
 // TestControl_Switch_CaseSwitchToAction2 verifies switching between cases.
 // Equivalent of C++ SwitchTest.CaseSwitchToAction2.
 func TestControl_Switch_CaseSwitchToAction2(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "Running1", core.SUCCESS, 2)
 
@@ -2630,11 +2398,7 @@ func TestControl_Switch_CaseSwitchToAction2(t *testing.T) {
 // returns FAILURE, the SwitchNode returns FAILURE.
 // Equivalent of C++ SwitchTest.ActionFailure.
 func TestControl_Switch_ActionFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	registerRunningAction(factory, "FailAction", core.FAILURE, 1)
 
@@ -2671,11 +2435,7 @@ func TestControl_Switch_ActionFailure(t *testing.T) {
 // children succeed, catch is NOT executed.
 // Equivalent of C++ TryCatchTest.AllTryChildrenSucceed.
 func TestControl_TryCatch_AllTryChildrenSucceed(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2715,11 +2475,7 @@ func TestControl_TryCatch_AllTryChildrenSucceed(t *testing.T) {
 // fails, the catch is executed.
 // Equivalent of C++ TryCatchTest.FirstChildFails_CatchExecuted.
 func TestControl_TryCatch_FirstChildFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2756,11 +2512,7 @@ func TestControl_TryCatch_FirstChildFails(t *testing.T) {
 // fails, catch is executed.
 // Equivalent of C++ TryCatchTest.SecondChildFails_CatchExecuted.
 func TestControl_TryCatch_SecondChildFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -2797,11 +2549,7 @@ func TestControl_TryCatch_SecondChildFails(t *testing.T) {
 // even when catch returns FAILURE.
 // Equivalent of C++ TryCatchTest.CatchReturnsFailure_NodeStillReturnsFAILURE.
 func TestControl_TryCatch_CatchReturnsFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2828,11 +2576,7 @@ func TestControl_TryCatch_CatchReturnsFailure(t *testing.T) {
 // even when catch returns SUCCESS.
 // Equivalent of C++ TryCatchTest.CatchReturnsSuccess_NodeStillReturnsFAILURE.
 func TestControl_TryCatch_CatchReturnsSuccess(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2859,11 +2603,7 @@ func TestControl_TryCatch_CatchReturnsSuccess(t *testing.T) {
 // first, then SUCCESS. Catch should NOT be executed.
 // Equivalent of C++ TryCatchTest.TryChildRunning.
 func TestControl_TryCatch_TryChildRunning(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tickCount := 0
 	_ = factory.RegisterSimpleCondition("RunningThenSuccess", func(core.TreeNode) core.NodeStatus {
@@ -2912,11 +2652,7 @@ func TestControl_TryCatch_TryChildRunning(t *testing.T) {
 // RUNNING first, then FAILURE.
 // Equivalent of C++ TryCatchTest.CatchChildRunning.
 func TestControl_TryCatch_CatchChildRunning(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	catchTickCount := 0
 	_ = factory.RegisterSimpleCondition("RunningThenFailure", func(core.TreeNode) core.NodeStatus {
@@ -2959,11 +2695,7 @@ func TestControl_TryCatch_CatchChildRunning(t *testing.T) {
 // only 1 child returns FAILURE at runtime.
 // Equivalent of C++ TryCatchTest.MinimumTwoChildren_ParseTimeValidation.
 func TestControl_TryCatch_MinimumTwoChildren(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2989,11 +2721,7 @@ func TestControl_TryCatch_MinimumTwoChildren(t *testing.T) {
 // be re-executed after success.
 // Equivalent of C++ TryCatchTest.ReExecuteAfterSuccess.
 func TestControl_TryCatch_ReExecuteAfterSuccess(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3038,11 +2766,7 @@ func TestControl_TryCatch_ReExecuteAfterSuccess(t *testing.T) {
 // after failure: try fails first time, succeeds second time.
 // Equivalent of C++ TryCatchTest.ReExecuteAfterFailure.
 func TestControl_TryCatch_ReExecuteAfterFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tryTickCount := 0
 	_ = factory.RegisterSimpleAction("FailThenSucceed", func(core.TreeNode) core.NodeStatus {
@@ -3095,11 +2819,7 @@ func TestControl_TryCatch_ReExecuteAfterFailure(t *testing.T) {
 // executed on halt when catch_on_halt is disabled (default).
 // Equivalent of C++ TryCatchTest.CatchOnHalt_Disabled.
 func TestControl_TryCatch_CatchOnHalt_Disabled(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	catchCount := 0
 	_ = factory.RegisterSimpleAction("CountCatch", func(core.TreeNode) core.NodeStatus {
@@ -3146,11 +2866,7 @@ func TestControl_TryCatch_CatchOnHalt_Disabled(t *testing.T) {
 // on halt when catch_on_halt is true.
 // Equivalent of C++ TryCatchTest.CatchOnHalt_Enabled.
 func TestControl_TryCatch_CatchOnHalt_Enabled(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	catchCount := 0
 	_ = factory.RegisterSimpleAction("CountCatch", func(core.TreeNode) core.NodeStatus {
@@ -3193,11 +2909,7 @@ func TestControl_TryCatch_CatchOnHalt_Enabled(t *testing.T) {
 // that catch_on_halt does not trigger when already in catch mode.
 // Equivalent of C++ TryCatchTest.CatchOnHalt_NotTriggeredWhenAlreadyInCatch.
 func TestControl_TryCatch_CatchOnHalt_NotTriggeredWhenAlreadyInCatch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	catchTicks := 0
 	_ = factory.RegisterSimpleCondition("RunningCatch", func(core.TreeNode) core.NodeStatus {
@@ -3240,11 +2952,7 @@ func TestControl_TryCatch_CatchOnHalt_NotTriggeredWhenAlreadyInCatch(t *testing.
 // inside a Sequence where the catch child is async.
 // Equivalent of C++ TryCatchTest.AsyncCatchCompletesInsideSequence.
 func TestControl_TryCatch_AsyncCatchCompletesInsideSequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	kRunningTicks := 5
 	catchTicks := 0
@@ -3309,11 +3017,7 @@ func TestControl_TryCatch_AsyncCatchCompletesInsideSequence(t *testing.T) {
 // try child.
 // Equivalent of C++ TryCatchTest.SingleTryChild_Success.
 func TestControl_TryCatch_SingleTryChild(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3349,11 +3053,7 @@ func TestControl_TryCatch_SingleTryChild(t *testing.T) {
 // multiple try children where the third one fails.
 // Equivalent of C++ TryCatchTest.ManyTryChildren_ThirdFails.
 func TestControl_TryCatch_ManyTryChildren_ThirdFails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3398,11 +3098,7 @@ func TestControl_TryCatch_ManyTryChildren_ThirdFails(t *testing.T) {
 // in a Sequence.
 // Equivalent of C++ SkippingLogic.Sequence.
 func TestControl_Skipping_Sequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3439,11 +3135,7 @@ func TestControl_Skipping_Sequence(t *testing.T) {
 // Sequence returns SKIPPED.
 // Equivalent of C++ SkippingLogic.SkipAll.
 func TestControl_Skipping_SkipAll(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3487,11 +3179,7 @@ func TestControl_Skipping_SkipAll(t *testing.T) {
 // is false for SubTree IDs), so the SubTree always executes.
 // Equivalent of C++ SkippingLogic.SkipSubtree.
 func TestControl_Skipping_SkipSubtree(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3533,11 +3221,7 @@ func TestControl_Skipping_SkipSubtree(t *testing.T) {
 // with a ReactiveSequence that has a single child.
 // Equivalent of C++ SkippingLogic.ReactiveSingleChild.
 func TestControl_Skipping_ReactiveSingleChild(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3567,11 +3251,7 @@ func TestControl_Skipping_ReactiveSingleChild(t *testing.T) {
 // the condition value). This differs from C++ where _while=true allows execution.
 // Equivalent of C++ SkippingLogic.WhileSkip.
 func TestControl_Skipping_WhileSkip(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -3637,11 +3317,7 @@ func TestControl_Skipping_WhileSkip(t *testing.T) {
 // ReactiveSequence.
 // Equivalent of C++ SkippingLogic.SkippingReactiveSequence.
 func TestControl_Skipping_SkippingReactiveSequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)

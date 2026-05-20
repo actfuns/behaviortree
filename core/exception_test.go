@@ -4,10 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // ThrowingActionNode is a test action that panics in Tick.
@@ -29,10 +27,7 @@ func (n *SucceedingActionNode) Tick() core.NodeStatus {
 }
 
 func TestExceptionTracking_BasicExceptionCapture(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ThrowingAction", core.PortsList{},
 		func(name string, config core.NodeConfig) core.TreeNode {
@@ -73,12 +68,7 @@ func TestExceptionTracking_BasicExceptionCapture(t *testing.T) {
 }
 
 func TestExceptionTracking_NestedExceptionBacktrace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ThrowingAction", core.PortsList{},
 		func(name string, config core.NodeConfig) core.TreeNode {
@@ -131,12 +121,7 @@ func TestExceptionTracking_NestedExceptionBacktrace(t *testing.T) {
 }
 
 func TestExceptionTracking_NoExceptionNoWrapping(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("SucceedingAction", core.PortsList{},
 		func(name string, config core.NodeConfig) core.TreeNode {
@@ -169,10 +154,7 @@ func TestExceptionTracking_NoExceptionNoWrapping(t *testing.T) {
 }
 
 func TestExceptionTracking_BacktraceEntryContents(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ThrowingAction", core.PortsList{},
 		func(name string, config core.NodeConfig) core.TreeNode {
@@ -213,12 +195,7 @@ func TestExceptionTracking_BacktraceEntryContents(t *testing.T) {
 }
 
 func TestExceptionTracking_SubtreeExceptionBacktrace(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("ThrowingAction", core.PortsList{},
 		func(name string, config core.NodeConfig) core.TreeNode {

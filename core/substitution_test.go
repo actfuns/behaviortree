@@ -4,10 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -17,11 +15,7 @@ import (
 // TestSubstitution_Parser verifies that substitution rules work correctly.
 // Equivalent of C++ Substitution/Parser.
 func TestSubstitution_Parser(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Add substitution rules directly (Go version uses AddSubstitutionRule
 	// with SubstitutionRule struct, no JSON parser for substitution rules yet)
@@ -67,11 +61,7 @@ func TestSubstitution_SubTreeNodeSubstitution(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.AddSubstitutionRule("Child", core.SubstitutionRule{ReplaceWith: "AlwaysSuccess"})
 	factory.RegisterBehaviorTreeFromText(parentXML)
@@ -103,11 +93,7 @@ func TestSubstitution_StringSubstitutionWithSimpleAction(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Register substitute action
 	_ = factory.RegisterSimpleAction("MyTestAction", func(core.TreeNode) core.NodeStatus {
@@ -144,11 +130,7 @@ func TestSubstitution_TestNodeConfigAsyncSubstitution(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Substitute action_B with MyReplacement that returns SUCCESS immediately.
 	_ = factory.RegisterSimpleAction("MyReplacement", func(core.TreeNode) core.NodeStatus {
@@ -182,11 +164,7 @@ func TestSubstitution_JsonStringSubstitution(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Use AddSubstitutionRule instead of JSON (Go version)
 	_ = factory.RegisterSimpleAction("MyReplacement", func(core.TreeNode) core.NodeStatus {
@@ -211,11 +189,7 @@ func TestSubstitution_JsonStringSubstitution(t *testing.T) {
 // with empty TestNodeConfigs.
 // Equivalent of C++ Substitution/JsonWithEmptyTestNodeConfigs_Issue930.
 func TestSubstitution_JsonWithEmptyTestNodeConfigs(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("ReplacementNode", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS
@@ -239,11 +213,7 @@ func TestSubstitution_JsonWithEmptyTestNodeConfigs(t *testing.T) {
 // without TestNodeConfigs.
 // Equivalent of C++ Substitution/JsonWithoutTestNodeConfigs_Issue930.
 func TestSubstitution_JsonWithoutTestNodeConfigs(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("ReplacementNode", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS
@@ -279,11 +249,7 @@ func TestSubstitution_JsonStringSubstitutionWithDelay(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	actionExecuted := false
 	_ = factory.RegisterSimpleAction("MyTest", func(core.TreeNode) core.NodeStatus {
@@ -319,11 +285,7 @@ func TestSubstitution_StringSubstitutionRegistrationID(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("MyReplacement", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS

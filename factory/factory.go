@@ -343,13 +343,15 @@ func (f *behaviorTreeFactory) InstantiateTreeNode(name, id string, config core.N
 		return nil, fmt.Errorf("Node type [%s] not registered", id)
 	}
 
-	// Apply substitution rules
+	// Apply substitution rules (match by registration ID or instance name, matching C++ behavior)
 	if replacementID, ok := f.substitutionRules[id]; ok {
+		id = replacementID.ReplaceWith
+	} else if replacementID, ok = f.substitutionRules[name]; ok {
 		id = replacementID.ReplaceWith
 	} else {
 		// Check wildcard substitution rules
 		for filter, rule := range f.substitutionRules {
-			if wildcardMatch(id, filter) {
+			if wildcardMatch(id, filter) || wildcardMatch(name, filter) {
 				id = rule.ReplaceWith
 				break
 			}

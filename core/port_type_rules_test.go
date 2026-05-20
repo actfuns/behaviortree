@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/actfuns/behaviortree/action"
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -98,11 +98,7 @@ func (n *nodeWithGenericPorts) Tick() core.NodeStatus {
 // ========== Tests ==========
 
 func TestPortTypeRules_SameType_IntToInt(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -134,11 +130,7 @@ func TestPortTypeRules_SameType_IntToInt(t *testing.T) {
 }
 
 func TestPortTypeRules_SameType_StringToString(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithStringPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -170,11 +162,7 @@ func TestPortTypeRules_SameType_StringToString(t *testing.T) {
 }
 
 func TestPortTypeRules_GenericPort_AcceptsInt(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -195,18 +183,14 @@ func TestPortTypeRules_GenericPort_AcceptsInt(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestPortTypeRules_GenericPort_AcceptsString(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithStringPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -227,18 +211,14 @@ func TestPortTypeRules_GenericPort_AcceptsString(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestPortTypeRules_GenericOutput_ToTypedInput(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -259,18 +239,14 @@ func TestPortTypeRules_GenericOutput_ToTypedInput(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestPortTypeRules_StringLiteralValidation_ValidFormat(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -284,18 +260,14 @@ func TestPortTypeRules_StringLiteralValidation_ValidFormat(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestPortTypeRules_StringToDifferentTypes(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithStringPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -366,11 +338,7 @@ func TestPortTypeRules_TypeLock_CannotChangeAfterTypedWrite(t *testing.T) {
 }
 
 func TestPortTypeRules_TypeLock_XMLTreeCreation_TypeMismatch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -391,18 +359,14 @@ func TestPortTypeRules_TypeLock_XMLTreeCreation_TypeMismatch(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Log("Note: type mismatch might not be caught at tree creation time in current Go implementation")
 	}
 }
 
 func TestPortTypeRules_GenericToTyped_ChainThroughBlackboard(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -442,11 +406,7 @@ func TestPortTypeRules_GenericToTyped_ChainThroughBlackboard(t *testing.T) {
 
 // TestPortTypeRules_SameType_CustomTypeToCustomType corresponds to C++ PortTypeRules/SameType_CustomTypeToCustomType.
 func TestPortTypeRules_SameType_CustomTypeToCustomType(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithTestPointPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -479,11 +439,7 @@ func TestPortTypeRules_SameType_CustomTypeToCustomType(t *testing.T) {
 
 // TestPortTypeRules_StringToDouble_ViaConvertFromString corresponds to C++ PortTypeRules/StringToDouble_ViaConvertFromString.
 func TestPortTypeRules_StringToDouble_ViaConvertFromString(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
 		"value":      core.NewPortInfo(core.INPUT),
@@ -523,11 +479,7 @@ func TestPortTypeRules_StringToDouble_ViaConvertFromString(t *testing.T) {
 
 // TestPortTypeRules_StringToVector_ViaConvertFromString corresponds to C++ PortTypeRules/StringToVector_ViaConvertFromString.
 func TestPortTypeRules_StringToVector_ViaConvertFromString(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithVectorPorts", core.PortsList{
 		"input": core.NewPortInfo(core.INPUT),
@@ -553,11 +505,7 @@ func TestPortTypeRules_StringToVector_ViaConvertFromString(t *testing.T) {
 // TestPortTypeRules_SubtreeStringInput_ToTypedPort corresponds to C++ PortTypeRules/SubtreeStringInput_ToTypedPort.
 func TestPortTypeRules_SubtreeStringInput_ToTypedPort(t *testing.T) {
 	// Simplified: verify a vector-like string input works directly.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithVectorPorts", core.PortsList{
 		"input": core.NewPortInfo(core.INPUT),
@@ -582,11 +530,7 @@ func TestPortTypeRules_SubtreeStringInput_ToTypedPort(t *testing.T) {
 
 // TestPortTypeRules_TypeLock_IntToDouble_Fails corresponds to C++ PortTypeRules/TypeLock_IntToDouble_Fails.
 func TestPortTypeRules_TypeLock_IntToDouble_Fails(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -607,7 +551,7 @@ func TestPortTypeRules_TypeLock_IntToDouble_Fails(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Log("Note: Go implementation may not catch int-to-double type mismatch at tree creation time")
 	}
@@ -615,11 +559,7 @@ func TestPortTypeRules_TypeLock_IntToDouble_Fails(t *testing.T) {
 
 // TestPortTypeRules_StringLiteralValidation_InvalidFormat corresponds to C++ PortTypeRules/StringLiteralValidation_InvalidFormat.
 func TestPortTypeRules_StringLiteralValidation_InvalidFormat(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -633,7 +573,7 @@ func TestPortTypeRules_StringLiteralValidation_InvalidFormat(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Log("Note: Go implementation may not validate string literal format at tree creation time")
 	}
@@ -641,11 +581,7 @@ func TestPortTypeRules_StringLiteralValidation_InvalidFormat(t *testing.T) {
 
 // TestPortTypeRules_CustomTypeStringLiteral_ValidFormat corresponds to C++ PortTypeRules/CustomTypeStringLiteral_ValidFormat.
 func TestPortTypeRules_CustomTypeStringLiteral_ValidFormat(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithTestPointPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -671,11 +607,7 @@ func TestPortTypeRules_CustomTypeStringLiteral_ValidFormat(t *testing.T) {
 
 // TestPortTypeRules_CustomTypeStringLiteral_InvalidFormat corresponds to C++ PortTypeRules/CustomTypeStringLiteral_InvalidFormat.
 func TestPortTypeRules_CustomTypeStringLiteral_InvalidFormat(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithTestPointPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -743,11 +675,7 @@ func TestPortTypeRules_GenericPortDeclaration_DefaultsToAnyTypeAllowed(t *testin
 
 // TestPortTypeRules_MixedTypesWithGenericIntermediate corresponds to C++ PortTypeRules/MixedTypesWithGenericIntermediate.
 func TestPortTypeRules_MixedTypesWithGenericIntermediate(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithIntPorts", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -769,7 +697,7 @@ func TestPortTypeRules_MixedTypesWithGenericIntermediate(t *testing.T) {
 	      </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("typed -> generic -> typed chain should be allowed, got: %v", err)
 	}

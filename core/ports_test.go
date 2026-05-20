@@ -3,8 +3,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // nodeWithPorts tests int ports with defaults.
@@ -35,11 +35,7 @@ func (n *nodeWithPorts) Tick() core.NodeStatus {
 }
 
 func TestPortTest_DefaultPorts(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPortWithDefault[int]("in_port_A", "42", "magic_number")
 	_, pb := core.InputPort[int]("in_port_B", "")
@@ -66,11 +62,7 @@ func TestPortTest_DefaultPorts(t *testing.T) {
 }
 
 func TestPortTest_NonPorts(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPort[int]("in_port_A", "")
 	_, pb := core.InputPort[int]("in_port_B", "")
@@ -94,11 +86,7 @@ func TestPortTest_NonPorts(t *testing.T) {
 }
 
 func TestPortTest_DefaultInput(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPortWithDefault[int]("answer", "42", "the answer")
 	_, pg := core.InputPortWithDefault[string]("greeting", "hello", "be polite")
@@ -283,11 +271,7 @@ func TestPortTest_WrongNodeConfig(t *testing.T) {
 
 // TestPortTest_MissingPort corresponds to C++ PortTest/MissingPort.
 func TestPortTest_MissingPort(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPortWithDefault[int]("in_port_A", "42", "magic_number")
 	_, pb := core.InputPort[int]("in_port_B", "")
@@ -315,11 +299,7 @@ func TestPortTest_MissingPort(t *testing.T) {
 
 // TestPortTest_WrongPort corresponds to C++ PortTest/WrongPort.
 func TestPortTest_WrongPort(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPortWithDefault[int]("in_port_A", "42", "magic_number")
 	_, pb := core.InputPort[int]("in_port_B", "")
@@ -335,7 +315,7 @@ func TestPortTest_WrongPort(t *testing.T) {
 			</BehaviorTree>
 		</root>`
 
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Log("Note: Go XML parser may not validate port names at tree creation time")
 	}
@@ -343,11 +323,7 @@ func TestPortTest_WrongPort(t *testing.T) {
 
 // TestPortTest_Descriptions corresponds to C++ PortTest/Descriptions.
 func TestPortTest_Descriptions(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, pa := core.InputPortWithDefault[int]("in_port_A", "42", "magic_number")
 	_, pb := core.InputPort[int]("in_port_B", "")
@@ -379,11 +355,7 @@ func TestPortTest_Descriptions(t *testing.T) {
 
 // TestPortTest_EmptyPort corresponds to C++ PortTest/EmptyPort.
 func TestPortTest_EmptyPort(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeInPorts", core.PortsList{
 		"int_port": core.NewPortInfo(core.INPUT),
@@ -417,11 +389,7 @@ func TestPortTest_EmptyPort(t *testing.T) {
 
 // TestPortTest_SubtreeStringInput_StringVector corresponds to C++ PortTest/SubtreeStringInput_StringVector.
 func TestPortTest_SubtreeStringInput_StringVector(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithVectorStringIn", core.PortsList{
 		"states": core.NewPortInfo(core.INPUT),
@@ -449,11 +417,7 @@ func TestPortTest_DefaultInputPoint2D(t *testing.T) {
 	// Simplified: verify tree creation with a simple input works.
 	// The C++ test uses Point2D struct with convertFromString specialization.
 	// Go passes the value as a string, which is used as-is.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithDefaultPoints", core.PortsList{
 		"input":  core.NewPortInfo(core.INPUT),
@@ -480,11 +444,7 @@ func TestPortTest_DefaultInputPoint2D(t *testing.T) {
 // TestPortTest_DefaultInputStrings corresponds to C++ PortTest/DefaultInputStrings.
 func TestPortTest_DefaultInputStrings(t *testing.T) {
 	// Simplified: string ports with blackboard-set values.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("NodeWithDefaultStrings", core.PortsList{
 		"input": core.NewPortInfo(core.INPUT),
@@ -519,10 +479,7 @@ func TestPortTest_Default_Issues_767(t *testing.T) {
 
 // TestPortTest_DefaultWronglyOverriden corresponds to C++ PortTest/DefaultWronglyOverriden.
 func TestPortTest_DefaultWronglyOverriden(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("TestAction", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		n := &core.SyncActionNode{}
@@ -539,7 +496,7 @@ func TestPortTest_DefaultWronglyOverriden(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xmlWrong, nil)
+	_, err := factory.CreateTreeFromText(xmlWrong, nil)
 	if err != nil {
 		t.Log("Note: empty port override might fail in Go implementation")
 	}
@@ -560,11 +517,7 @@ func TestPortTest_DefaultWronglyOverriden(t *testing.T) {
 
 // TestPortTest_GetInputDefaultValue_Issue858 corresponds to C++ PortTest/GetInputDefaultValue_Issue858.
 func TestPortTest_GetInputDefaultValue_Issue858(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, logPort := core.InputPortWithDefault[string]("log_name", "my_default_logger", "Logger name")
 	_, msgPort := core.InputPort[string]("message", "Message to be logged")
@@ -592,11 +545,7 @@ func TestPortTest_GetInputDefaultValue_Issue858(t *testing.T) {
 
 // TestPortTest_LoopNodeAcceptsVector_Issue969 corresponds to C++ PortTest/LoopNodeAcceptsVector_Issue969.
 func TestPortTest_LoopNodeAcceptsVector_Issue969(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("ProduceVectorDouble", core.PortsList{
 		"numbers": core.NewPortInfo(core.OUTPUT),
@@ -624,11 +573,7 @@ func TestPortTest_LoopNodeAcceptsVector_Issue969(t *testing.T) {
 
 // TestPortTest_DefaultEmptyVector_Issue982 corresponds to C++ PortTest/DefaultEmptyVector_Issue982.
 func TestPortTest_DefaultEmptyVector_Issue982(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("TestActionEmptyVec", core.PortsList{
 		"string_vector": core.NewPortInfo(core.INPUT),
@@ -661,11 +606,7 @@ func TestPortTest_DefaultEmptyVector_Issue982(t *testing.T) {
 // TestPortTest_SubtreeStringLiteralToLoopDouble_Issue1065 corresponds to C++ PortTest/SubtreeStringLiteralToLoopDouble_Issue1065.
 func TestPortTest_SubtreeStringLiteralToLoopDouble_Issue1065(t *testing.T) {
 	// Simplified version: Create a tree that passes a string through a SubTree port.
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("CollectDouble", core.PortsList{
 		"value": core.NewPortInfo(core.INPUT),

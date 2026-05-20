@@ -1,19 +1,14 @@
-package core_test
+package factory_test
 
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 func TestBehaviorTreeFactory_NotRegisteredNode(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 		<root BTCPP_format="4" >
@@ -26,18 +21,14 @@ func TestBehaviorTreeFactory_NotRegisteredNode(t *testing.T) {
 		    </BehaviorTree>
 		</root>`
 
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Error("expected error for unregistered node type")
 	}
 }
 
 func TestBehaviorTreeFactory_WrongTreeName(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlA := `
 	  <root BTCPP_format="4" >
@@ -47,18 +38,14 @@ func TestBehaviorTreeFactory_WrongTreeName(t *testing.T) {
 	  </root>`
 
 	factory.RegisterBehaviorTreeFromText(xmlA)
-	_, err = factory.CreateTree("Wrong Name", nil)
+	_, err := factory.CreateTree("Wrong Name", nil)
 	if err == nil {
 		t.Error("expected error for wrong tree name")
 	}
 }
 
 func TestBehaviorTreeReload_ReloadSameTree(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlA := `
 	<root BTCPP_format="4" >
@@ -100,11 +87,7 @@ func TestBehaviorTreeReload_ReloadSameTree(t *testing.T) {
 }
 
 func TestBehaviorTreeFactory_CreateTreeFromTextFindsRegisteredSubtree(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	subtreeXML := `
 	  <root BTCPP_format="4">
@@ -122,18 +105,14 @@ func TestBehaviorTreeFactory_CreateTreeFromTextFindsRegisteredSubtree(t *testing
 	    </BehaviorTree>
 	  </root>`
 
-	_, err = factory.CreateTreeFromText(mainXML, nil)
+	_, err := factory.CreateTreeFromText(mainXML, nil)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
 }
 
 func TestBehaviorTreeFactory_MalformedXML_MissingRootElement(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	  <something BTCPP_format="4">
@@ -142,18 +121,14 @@ func TestBehaviorTreeFactory_MalformedXML_MissingRootElement(t *testing.T) {
 	    </BehaviorTree>
 	  </something>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Error("expected error for missing root element")
 	}
 }
 
 func TestBehaviorTreeFactory_MalformedXML_UnknownNodeType(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	  <root BTCPP_format="4">
@@ -162,18 +137,14 @@ func TestBehaviorTreeFactory_MalformedXML_UnknownNodeType(t *testing.T) {
 	    </BehaviorTree>
 	  </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Error("expected error for unknown node type")
 	}
 }
 
 func TestBehaviorTreeFactory_MalformedXML_EmptyBehaviorTree(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	  <root BTCPP_format="4">
@@ -181,18 +152,14 @@ func TestBehaviorTreeFactory_MalformedXML_EmptyBehaviorTree(t *testing.T) {
 	    </BehaviorTree>
 	  </root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Error("expected error for empty behavior tree")
 	}
 }
 
 func TestBehaviorTreeFactory_ManifestAndMetadata(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Add metadata to AlwaysSuccess manifest
 	metadata := core.KeyValueVector{
@@ -234,11 +201,7 @@ func TestBehaviorTreeFactory_XMLParsingOrder(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Load part2 first, then part1
 	factory.RegisterBehaviorTreeFromText(xmlPart2)
@@ -280,11 +243,7 @@ func TestBehaviorTreeFactory_Subtree(t *testing.T) {
 	    </BehaviorTree>
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlTextSubtree, nil)
 	if err != nil {
@@ -332,11 +291,7 @@ func TestBehaviorTreeFactory_SubTreeWithRemapping(t *testing.T) {
 
 	</root>`
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tree, err := factory.CreateTreeFromText(xmlPortsSubtree, nil)
 	if err != nil {
@@ -374,10 +329,7 @@ func TestBehaviorTreeFactory_SubTreeWithRemapping(t *testing.T) {
 // node registration info after nodes are registered.
 // Equivalent of C++ BehaviorTreeFactory/ManifestMethod.
 func TestBehaviorTreeFactory_ManifestMethod(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	key, pi := core.InputPort[string]("message", "message to say")
 	_ = factory.RegisterNodeType("SaySomething", core.PortsList{"message": pi},
@@ -410,11 +362,7 @@ func TestBehaviorTreeFactory_ManifestMethod(t *testing.T) {
 // be added to an existing manifest.
 // Equivalent of C++ BehaviorTreeFactory/addMetadataToManifest.
 func TestBehaviorTreeFactory_addMetadataToManifest(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Initially metadata should be empty
 	manifests := factory.Manifests()
@@ -454,14 +402,10 @@ func TestBehaviorTreeFactory_addMetadataToManifest(t *testing.T) {
 // a root element other than <root> causes an error.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_InvalidRoot.
 func TestBehaviorTreeFactory_MalformedXML_InvalidRoot(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Not valid XML at all
-	_, err = factory.CreateTreeFromText("<not valid xml!!!", nil)
+	_, err := factory.CreateTreeFromText("<not valid xml!!!", nil)
 	if err == nil {
 		t.Error("expected error for invalid XML")
 	}
@@ -471,11 +415,7 @@ func TestBehaviorTreeFactory_MalformedXML_InvalidRoot(t *testing.T) {
 // with an empty ID attribute on BehaviorTree causes an error.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_EmptyBehaviorTreeID.
 func TestBehaviorTreeFactory_MalformedXML_EmptyBehaviorTreeID(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -487,7 +427,7 @@ func TestBehaviorTreeFactory_MalformedXML_EmptyBehaviorTreeID(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// An empty ID is not valid; the parser should either assign a default
 	// name or return an error. Both are acceptable.
 	if err == nil {
@@ -499,11 +439,7 @@ func TestBehaviorTreeFactory_MalformedXML_EmptyBehaviorTreeID(t *testing.T) {
 // with BehaviorTree elements missing the ID attribute causes an error.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_MissingBehaviorTreeID.
 func TestBehaviorTreeFactory_MalformedXML_MissingBehaviorTreeID(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -515,7 +451,7 @@ func TestBehaviorTreeFactory_MalformedXML_MissingBehaviorTreeID(t *testing.T) {
 	  </BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Missing IDs - the parser may assign defaults or error out
 	if err == nil {
 		t.Log("CreateTreeFromText with missing ID succeeded (parser assigns default names)")
@@ -526,11 +462,7 @@ func TestBehaviorTreeFactory_MalformedXML_MissingBehaviorTreeID(t *testing.T) {
 // excessively deep XML nesting causes an error.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_DeeplyNestedElements.
 func TestBehaviorTreeFactory_MalformedXML_DeeplyNestedElements(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := "<root BTCPP_format=\"4\"><BehaviorTree ID=\"Main\">"
 	depth := 300
@@ -543,7 +475,7 @@ func TestBehaviorTreeFactory_MalformedXML_DeeplyNestedElements(t *testing.T) {
 	}
 	xml += "</BehaviorTree></root>"
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err == nil {
 		t.Error("expected error for deeply nested elements (depth=300)")
 	}
@@ -553,11 +485,7 @@ func TestBehaviorTreeFactory_MalformedXML_DeeplyNestedElements(t *testing.T) {
 // moderate XML nesting depth is accepted.
 // Equivalent of C++ BehaviorTreeFactory/ModerateNestingIsOK.
 func TestBehaviorTreeFactory_MalformedXML_ModerateNestingIsOK(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := "<root BTCPP_format=\"4\"><BehaviorTree ID=\"Main\">"
 	depth := 50
@@ -570,7 +498,7 @@ func TestBehaviorTreeFactory_MalformedXML_ModerateNestingIsOK(t *testing.T) {
 	}
 	xml += "</BehaviorTree></root>"
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Errorf("expected no error for moderate nesting (depth=50), got: %v", err)
 	}
@@ -581,11 +509,7 @@ func TestBehaviorTreeFactory_MalformedXML_ModerateNestingIsOK(t *testing.T) {
 // In the Go port, this may or may not be validated.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_MultipleBTChildElements.
 func TestBehaviorTreeFactory_MalformedXML_MultipleBTChildElements(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">
@@ -595,7 +519,7 @@ func TestBehaviorTreeFactory_MalformedXML_MultipleBTChildElements(t *testing.T) 
 	  </BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	// Go XML parser may allow multiple child elements; document current behavior.
 	if err == nil {
 		t.Log("Go parser allows multiple child elements under BehaviorTree")
@@ -606,13 +530,9 @@ func TestBehaviorTreeFactory_MalformedXML_MultipleBTChildElements(t *testing.T) 
 // completely empty string causes an error.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_CompletelyEmpty.
 func TestBehaviorTreeFactory_MalformedXML_CompletelyEmpty(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
-	_, err = factory.CreateTreeFromText("", nil)
+	_, err := factory.CreateTreeFromText("", nil)
 	if err == nil {
 		t.Error("expected error for completely empty XML")
 	}
@@ -622,16 +542,12 @@ func TestBehaviorTreeFactory_MalformedXML_CompletelyEmpty(t *testing.T) {
 // with no children results in an error when creating a tree.
 // Equivalent of C++ BehaviorTreeFactory/MalformedXML_EmptyRoot.
 func TestBehaviorTreeFactory_MalformedXML_EmptyRoot(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `<root BTCPP_format="4"></root>`
 
 	factory.RegisterBehaviorTreeFromText(xml)
-	_, err = factory.CreateTree("MainTree", nil)
+	_, err := factory.CreateTree("MainTree", nil)
 	if err == nil {
 		t.Error("expected error when creating tree from empty root")
 	}

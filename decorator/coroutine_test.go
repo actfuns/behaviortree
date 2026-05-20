@@ -1,55 +1,18 @@
-package decorator
+package decorator_test
 
 import (
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/actfuns/behaviortree/action"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
-
-// registerStandardTestNodes registers all standard node types needed for XML-based tests.
-// This is a local version to avoid import cycles with the control package.
-func registerStandardTestNodes(factory *core.BehaviorTreeFactory) {
-	// Control nodes
-	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return newCoroSequenceNode(name, config)
-	}, core.Control)
-
-	// Action nodes
-	_ = factory.RegisterNodeType("Sleep", core.PortsList{
-		"msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewSleepNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("AlwaysSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewAlwaysSuccessNode(name, config)
-	}, core.Action)
-
-	// Decorator nodes
-	_ = factory.RegisterNodeType("Timeout", core.PortsList{
-		"msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewTimeoutNode(name, config)
-	}, core.Decorator)
-}
 
 // coroSequenceNode is a minimal Sequence node for testing.
 type coroSequenceNode struct {
 	core.ControlNode
 	childIdx int
-}
-
-func newCoroSequenceNode(name string, config core.NodeConfig) *coroSequenceNode {
-	n := &coroSequenceNode{}
-	n.Init(name, config)
-	n.SetSelf(n)
-	n.SetRegistrationID("Sequence")
-	return n
 }
 
 func (n *coroSequenceNode) Tick() core.NodeStatus {
@@ -87,11 +50,7 @@ func (n *coroSequenceNode) Halt() {
 
 func TestCoro_DoAction(t *testing.T) {
 	// Test that a sync action runs correctly
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerStandardTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	actionCalled := false
 	_ = factory.RegisterSimpleAction("TestAction", func(core.TreeNode) core.NodeStatus {
@@ -128,11 +87,7 @@ func TestCoro_DoAction(t *testing.T) {
 func TestCoro_DoActionTimeout(t *testing.T) {
 	// Test that TimeoutNode wrapping an async action works:
 	// An action with a long async delay under a short timeout should fail (timeout)
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerStandardTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4" >
@@ -160,11 +115,7 @@ func TestCoro_DoActionTimeout(t *testing.T) {
 
 func TestCoro_SequenceChild(t *testing.T) {
 	// Sequence with multiple async actions under Timeout
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerStandardTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4" >
@@ -192,11 +143,7 @@ func TestCoro_SequenceChild(t *testing.T) {
 
 func TestCoro_OtherThreadHalt(t *testing.T) {
 	// Halt from another goroutine
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerStandardTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4" >

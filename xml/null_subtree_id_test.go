@@ -1,20 +1,17 @@
-package xml
+package xml_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestXML_NullSubTreeID verifies that a SubTree element inside TreeNodesModel
 // without an ID attribute returns an error.
 // This tests for BUG-7: null pointer dereference when SubTree element is missing ID.
 func TestXML_NullSubTreeID(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -28,7 +25,7 @@ func TestXML_NullSubTreeID(t *testing.T) {
 		</TreeNodesModel>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err != nil {
 		t.Logf("CreateTreeFromText returned error: %v", err)
 		// The error should mention the missing ID attribute

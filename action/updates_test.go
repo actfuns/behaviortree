@@ -1,15 +1,14 @@
-package action
+package action_test
 
 import (
 	"testing"
 
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // registerUpdatesTestNodes registers the minimal set of nodes needed for updates tests.
-func registerUpdatesTestNodes(factory *core.BehaviorTreeFactory) {
+func registerUpdatesTestNodes(factory core.BehaviorTreeFactory) {
 	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		n := &updatesSequenceNode{}
 		n.Init(name, config)
@@ -25,22 +24,6 @@ func registerUpdatesTestNodes(factory *core.BehaviorTreeFactory) {
 		n.SetRegistrationID("Fallback")
 		return n
 	}, core.Control)
-
-	_ = factory.RegisterNodeType("Script", core.PortsList{
-		"code": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewScriptNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("AlwaysSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewAlwaysSuccessNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("WasEntryUpdated", core.PortsList{
-		"entry": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewEntryUpdatedAction(name, config)
-	}, core.Action)
 
 	_ = factory.RegisterNodeType("Repeat", core.PortsList{
 		"num_cycles": core.NewPortInfo(core.INPUT),
@@ -191,10 +174,7 @@ func (n *updatesSubTreeNode) Tick() core.NodeStatus {
 // --------------------------------------------------------------------
 
 func TestEntryUpdates_NoEntry(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerUpdatesTestNodes(factory)
 
 	testACalled := 0
@@ -256,10 +236,7 @@ func TestEntryUpdates_NoEntry(t *testing.T) {
 }
 
 func TestEntryUpdates_Initialized(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerUpdatesTestNodes(factory)
 
 	testACalled := 0
@@ -316,10 +293,7 @@ func TestEntryUpdates_Initialized(t *testing.T) {
 }
 
 func TestEntryUpdates_UpdateOnce(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerUpdatesTestNodes(factory)
 
 	testACalled := 0
@@ -378,10 +352,7 @@ func TestEntryUpdates_UpdateOnce(t *testing.T) {
 }
 
 func TestEntryUpdates_UpdateTwice(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerUpdatesTestNodes(factory)
 
 	testACalled := 0

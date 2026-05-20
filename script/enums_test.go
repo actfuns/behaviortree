@@ -1,4 +1,4 @@
-package script
+package script_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
 	"github.com/actfuns/behaviortree/decorator"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -15,7 +15,7 @@ import (
 // --------------------------------------------------------------------
 
 // registerEnumNodes registers the node types needed for enum tests.
-func registerEnumNodes(factory *core.BehaviorTreeFactory) {
+func registerEnumNodes(factory core.BehaviorTreeFactory) {
 	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		return control.NewSequenceNode(name, config)
 	}, core.Control)
@@ -59,10 +59,7 @@ func registerEnumNodes(factory *core.BehaviorTreeFactory) {
 // TestEnums_StringToEnum verifies that enum values can be used in scripts.
 // Equivalent of C++ Enums/StrintToEnum.
 func TestEnums_StringToEnum(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerEnumNodes(factory)
 
 	// Register Color enum values (using simple names without dots,
@@ -124,10 +121,7 @@ func (n *testActionEnum) Tick() core.NodeStatus {
 // TestEnums_SwitchNodeWithEnum verifies Switch4 with enum case values.
 // Equivalent of C++ Enums/SwitchNodeWithEnum.
 func TestEnums_SwitchNodeWithEnum(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerEnumNodes(factory)
 
 	factory.RegisterScriptingEnum("Red", 0)
@@ -167,10 +161,7 @@ func TestEnums_SwitchNodeWithEnum(t *testing.T) {
 // TestEnums_SubtreeRemapping verifies enum remapping through subtree ports.
 // Equivalent of C++ Enums/SubtreeRemapping.
 func TestEnums_SubtreeRemapping(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerEnumNodes(factory)
 
 	factory.RegisterScriptingEnum("NO_FAULT", 0)
@@ -223,10 +214,7 @@ func (n *testPrintEnum) Tick() core.NodeStatus {
 // convertFromString work without ScriptingEnumsRegistry.
 // Equivalent of C++ Enums/ParseEnumWithConvertFromString_Issue948.
 func TestEnums_ParseEnumWithConvertFromString(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerEnumNodes(factory)
 
 	// TestNode from the registered "TestNode" type will parse return_status

@@ -3,10 +3,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // --------------------------------------------------------------------
@@ -292,11 +290,7 @@ func TestPolymorphicPort_Blackboard_TransitiveUpcast(t *testing.T) {
 // --------------------------------------------------------------------
 
 func TestPolymorphicPort_XML_ValidUpcast(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	createCatCalled := false
 	printCatCalled := false
@@ -347,11 +341,7 @@ func TestPolymorphicPort_XML_ValidUpcast(t *testing.T) {
 }
 
 func TestPolymorphicPort_XML_TransitiveUpcast(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	createSphynxCalled := false
 	printAnimalCalled := false
@@ -393,11 +383,7 @@ func TestPolymorphicPort_XML_TransitiveUpcast(t *testing.T) {
 }
 
 func TestPolymorphicPort_XML_InoutRejectsTypeMismatch(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("CreateCat", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS
@@ -417,7 +403,7 @@ func TestPolymorphicPort_XML_InoutRejectsTypeMismatch(t *testing.T) {
 		</BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Logf("CreateTreeFromText rejected type mismatch: %v", err)
 	} else {
@@ -426,11 +412,7 @@ func TestPolymorphicPort_XML_InoutRejectsTypeMismatch(t *testing.T) {
 }
 
 func TestPolymorphicPort_XML_InvalidConnection_UnrelatedTypes(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("CreateCat", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS
@@ -449,7 +431,7 @@ func TestPolymorphicPort_XML_InvalidConnection_UnrelatedTypes(t *testing.T) {
 		</BehaviorTree>
 	</root>`
 
-	_, err = factory.CreateTreeFromText(xml, nil)
+	_, err := factory.CreateTreeFromText(xml, nil)
 	if err != nil {
 		t.Logf("CreateTreeFromText rejected unrelated types: %v", err)
 	} else {
@@ -458,11 +440,7 @@ func TestPolymorphicPort_XML_InvalidConnection_UnrelatedTypes(t *testing.T) {
 }
 
 func TestPolymorphicPort_XML_DowncastSucceedsAtRuntime(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	catCreated := false
 	catPrinted := false
@@ -504,11 +482,7 @@ func TestPolymorphicPort_XML_DowncastSucceedsAtRuntime(t *testing.T) {
 }
 
 func TestPolymorphicPort_XML_DowncastFailsAtRuntime(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	animalCreated := false
 	catPrinted := false

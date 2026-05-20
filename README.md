@@ -11,12 +11,11 @@ import (
     "fmt"
 
     "github.com/actfuns/behaviortree/core"
-    _ "github.com/actfuns/behaviortree/script"
-    _ "github.com/actfuns/behaviortree/xml"
+    "github.com/actfuns/behaviortree/factory"
 )
 
 func main() {
-    factory, _ := core.NewBehaviorTreeFactory()
+    factory := factory.NewBehaviorTreeFactory()
     factory.RegisterSimpleAction("Say", func(core.TreeNode) core.NodeStatus {
         fmt.Println("Hello, BT!")
         return core.SUCCESS
@@ -46,7 +45,8 @@ go get github.com/actfuns/behaviortree
 
 | 包 | 职责 |
 |---|---|
-| [core](core/) | 节点接口、状态机、黑板、工厂、端口/类型系统、脚本环境 |
+| [core](core/) | 节点接口、状态机、黑板、端口/类型系统、脚本环境 |
+| [factory](factory/) | 工厂实现，注册所有内建节点，管理与生命周期 |
 | [control](control/) | 序列、回退、并行、反应式序列、IfThenElse、WhileDoElse、Switch、TryCatch |
 | [decorator](decorator/) | 重试、重复、超时、延迟、逆变器、ForceSuccess/Failure、KeepRunning、SubTree、前置条件 |
 | [action](action/) | 内建动作：Script、Sleep、SetBlackboard、AlwaysSuccess/Failure、EntryUpdated |
@@ -167,13 +167,14 @@ x > 0 && y < 10
 go test github.com/actfuns/behaviortree/...
 ```
 
-405+ 测试覆盖：
+407 测试覆盖：
 
-| 包 | 测试文件 | 函数数 |
+| 包 | 测试文件 | 测试函数 |
 |---|---|---|
-| core | 15 个 | 208 |
+| core | 14 个 | 185 |
 | control | 3 个 | 97 |
 | decorator | 3 个 | 37 |
+| factory | 2 个 | 29 |
 | xml | 2 个 | 29 |
 | script | 2 个 | 22 |
 | action | 3 个 | 8 |

@@ -1267,8 +1267,3 @@ func ValidateScript(script string) error {
 	}
 	return nil
 }
-
-// init registers the script parser with the core package.
-func init() {
-	core.RegisterScriptParser(ParseScript)
-}

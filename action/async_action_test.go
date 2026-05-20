@@ -1,4 +1,4 @@
-package action
+package action_test
 
 import (
 	"sync"
@@ -6,30 +6,12 @@ import (
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
-
-// registerAsyncTestNodes registers nodes needed for async halt tests.
-func registerAsyncTestNodes(factory *core.BehaviorTreeFactory) {
-	_ = factory.RegisterNodeType("Sleep", core.PortsList{
-		"msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewSleepNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("AlwaysSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewAlwaysSuccessNode(name, config)
-	}, core.Action)
-}
 
 // TestAsyncAction_NoHalt verifies that halting an IDLE node is a no-op.
 func TestAsyncAction_NoHalt(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerAsyncTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Create an XML tree with a Sleep node
 	xml := `
@@ -51,11 +33,7 @@ func TestAsyncAction_NoHalt(t *testing.T) {
 
 // TestAsyncAction_Halt verifies that halting a RUNNING node works.
 func TestAsyncAction_Halt(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerAsyncTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Use a Sleep node with a long delay so we can halt it while running
 	xml := `
@@ -90,11 +68,7 @@ func TestAsyncAction_Halt(t *testing.T) {
 
 // TestAsyncAction_NormalRoutine verifies that an async action completes successfully.
 func TestAsyncAction_NormalRoutine(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerAsyncTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Use a Sleep node with a short delay
 	xml := `

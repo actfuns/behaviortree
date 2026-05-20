@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/actfuns/behaviortree/action"
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // bbTestNode is the Go equivalent of BB_TestNode.
@@ -100,11 +99,7 @@ func TestBlackboardTest_GetInputsFromText(t *testing.T) {
 }
 
 func TestBlackboardTest_WithFactory(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("BB_TestNode", core.PortsList{
 		"in_port":  core.NewPortInfo(core.INPUT),
@@ -163,11 +158,7 @@ func TestBlackboardTest_NullOutputRemapping(t *testing.T) {
 }
 
 func TestBlackboardTest_RootBlackboard(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	  <root BTCPP_format="4" >
@@ -208,11 +199,7 @@ func TestBlackboardTest_RootBlackboard(t *testing.T) {
 }
 
 func TestBlackboardTest_Issue605_whitespaces(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	  <root BTCPP_format="4" >
@@ -287,11 +274,7 @@ func TestBlackboardTest_DebugMessage(t *testing.T) {
 // TestBlackboardTest_SetOutputFromText corresponds to C++ BlackboardTest/SetOutputFromText.
 // XML sets out_port for BB_TestNode, then Script code="my_port=-43" modifies the value.
 func TestBlackboardTest_SetOutputFromText(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("BB_TestNode", core.PortsList{
 		"in_port":  core.NewPortInfo(core.INPUT),
@@ -332,11 +315,7 @@ func TestBlackboardTest_SetOutputFromText(t *testing.T) {
 // TestBlackboardTest_TypoInPortName corresponds to C++ BlackboardTest/TypoInPortName.
 // XML uses a misspelled port name "inpuuuut_port", CreateTreeFromText should return an error.
 func TestBlackboardTest_TypoInPortName(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("BB_TestNode", core.PortsList{
 		"in_port":  core.NewPortInfo(core.INPUT),
@@ -352,7 +331,7 @@ func TestBlackboardTest_TypoInPortName(t *testing.T) {
 	        </BehaviorTree>
 	    </root>`
 
-	_, err = factory.CreateTreeFromText(xmlText, nil)
+	_, err := factory.CreateTreeFromText(xmlText, nil)
 	if err == nil {
 		t.Error("expected error for misspelled port name, got nil")
 	}
@@ -434,11 +413,7 @@ func TestBlackboardTest_SetStringView(t *testing.T) {
 // TestBlackboardTest_IssueSetBlackboard corresponds to C++ BlackboardTest/IssueSetBlackboard.
 // Tests SetBlackboard action + SubTree combination.
 func TestBlackboardTest_IssueSetBlackboard(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Register SetBlackboard node from action package
 	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
@@ -525,10 +500,7 @@ func (n *comparisonNode) Tick() core.NodeStatus {
 // TestBlackboardTest_SetBlackboard_Issue725 corresponds to C++ BlackboardTest/SetBlackboard_Issue725.
 // SetBlackboard with port remapping that copies one blackboard entry to another.
 func TestBlackboardTest_SetBlackboard_Issue725(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Register SetBlackboard node
 	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
@@ -579,11 +551,7 @@ func TestBlackboardTest_SetBlackboard_Issue725(t *testing.T) {
 // Note: Go does not have BlackboardBackup/BlackboardRestore functions.
 // This test verifies the equivalent behavior: subtrees have independent blackboards.
 func TestBlackboardTest_BlackboardBackup(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xmlText := `
 	<root BTCPP_format="4" >
@@ -617,8 +585,6 @@ func TestBlackboardTest_BlackboardBackup(t *testing.T) {
 // Verifies that SetBlackboard updates the timestamp and sequence ID.
 // Go version simplified: verifies sequence IDs increase after a SetBlackboard call.
 func TestBlackboardTest_SetBlackboard_Upd_Ts_SeqId(t *testing.T) {
-	_ = control.RegisterStandardNodes
-
 	bb := core.NewBlackboard(nil)
 	bb.Set("first_point", "point1")
 	bb.Set("second_point", "point2")
@@ -656,11 +622,7 @@ func TestBlackboardTest_SetBlackboard_Upd_Ts_SeqId(t *testing.T) {
 // TestBlackboardTest_SetBlackboard_WithPortRemapping corresponds to C++ BlackboardTest/SetBlackboard_WithPortRemapping.
 // SetBlackboard with port remapping and SubTree.
 func TestBlackboardTest_SetBlackboard_WithPortRemapping(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Register SetBlackboard node
 	_ = factory.RegisterNodeType("SetBlackboard", core.PortsList{
@@ -709,10 +671,7 @@ func TestBlackboardTest_DebugMessageShowsRemappedEntries_Issue408(t *testing.T) 
 // TestBlackboardTest_GetLockedPortContentWithDefault_Issue942 corresponds to C++ BlackboardTest/GetLockedPortContentWithDefault_Issue942.
 // Tests that GetLockedPortContent returns a valid locked reference.
 func TestBlackboardTest_GetLockedPortContentWithDefault_Issue942(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 
 	_, valuePort := core.BidirectionalPort[int]("value", "")
 	factory.RegisterNodeType("ActionWithLockedPort", core.PortsList{

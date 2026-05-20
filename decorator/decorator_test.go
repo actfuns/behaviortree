@@ -1,73 +1,19 @@
-package decorator
+package decorator_test
 
 import (
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/actfuns/behaviortree/action"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/decorator"
+	"github.com/actfuns/behaviortree/factory"
 )
-
-// registerTestNodes registers the node types needed by the XML-based decorator tests.
-// It is a local replacement for control.RegisterStandardNodes to avoid import cycles.
-func registerTestNodes(factory *core.BehaviorTreeFactory) {
-	// Control nodes
-	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return newSequenceNode(name, config)
-	}, core.Control)
-
-	// Action nodes
-	_ = factory.RegisterNodeType("AlwaysSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewAlwaysSuccessNode(name, config)
-	}, core.Action)
-
-	_ = factory.RegisterNodeType("AlwaysFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return action.NewAlwaysFailureNode(name, config)
-	}, core.Action)
-
-	// Decorator nodes under test
-	_ = factory.RegisterNodeType("RunOnce", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewRunOnceNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("Delay", core.PortsList{
-		"delay_msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewDelayNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("ForceFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewForceFailureNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("ForceSuccess", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewForceSuccessNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("Inverter", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewInverterNode(name, config)
-	}, core.Decorator)
-
-	_ = factory.RegisterNodeType("KeepRunningUntilFailure", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewKeepRunningUntilFailureNode(name, config)
-	}, core.Decorator)
-}
 
 // simpleSequenceNode is a minimal SequenceNode for testing.
 type simpleSequenceNode struct {
 	core.ControlNode
 	childIdx int
-}
-
-func newSequenceNode(name string, config core.NodeConfig) *simpleSequenceNode {
-	n := &simpleSequenceNode{}
-	n.Init(name, config)
-	n.SetSelf(n)
-	n.SetRegistrationID("Sequence")
-	return n
 }
 
 func (n *simpleSequenceNode) Tick() core.NodeStatus {
@@ -112,7 +58,7 @@ func (n *simpleSequenceNode) Halt() {
 func TestDeadlineTriggered(t *testing.T) {
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["msec"] = "10"
-	timeout := NewTimeoutNode("deadline", cfg)
+	timeout := decorator.NewTimeoutNode("deadline", cfg)
 
 	actionCfg := core.NewNodeConfig()
 	actionCfg.InputPorts["return_status"] = "SUCCESS"
@@ -140,7 +86,7 @@ func TestDeadlineTriggered(t *testing.T) {
 func TestDeadlineNotTriggered(t *testing.T) {
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["msec"] = "10"
-	timeout := NewTimeoutNode("deadline", cfg)
+	timeout := decorator.NewTimeoutNode("deadline", cfg)
 
 	actionCfg := core.NewNodeConfig()
 	actionCfg.InputPorts["return_status"] = "SUCCESS"
@@ -170,7 +116,7 @@ func TestRetry(t *testing.T) {
 	// --- First pass: child always fails, retry should fail after 3 attempts ---
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["num_attempts"] = "3"
-	retry := NewRetryNode("retry", cfg)
+	retry := decorator.NewRetryNode("retry", cfg)
 	action := newSyncFailAction("action")
 	retry.SetChild(action)
 
@@ -186,7 +132,7 @@ func TestRetry(t *testing.T) {
 	action2 := newSyncSuccessAction("action2")
 	retry2Cfg := core.NewNodeConfig()
 	retry2Cfg.InputPorts["num_attempts"] = "3"
-	retry2 := NewRetryNode("retry2", retry2Cfg)
+	retry2 := decorator.NewRetryNode("retry2", retry2Cfg)
 	retry2.SetChild(action2)
 
 	retry2.ExecuteTick()
@@ -204,7 +150,7 @@ func TestRepeat(t *testing.T) {
 	// --- First pass: child fails, repeat should stop immediately ---
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["num_cycles"] = "3"
-	repeat := NewRepeatNode("repeat", cfg)
+	repeat := decorator.NewRepeatNode("repeat", cfg)
 	failAction := newSyncFailAction("action")
 	repeat.SetChild(failAction)
 
@@ -220,7 +166,7 @@ func TestRepeat(t *testing.T) {
 	successAction := newSyncSuccessAction("action2")
 	repeat2Cfg := core.NewNodeConfig()
 	repeat2Cfg.InputPorts["num_cycles"] = "3"
-	repeat2 := NewRepeatNode("repeat2", repeat2Cfg)
+	repeat2 := decorator.NewRepeatNode("repeat2", repeat2Cfg)
 	repeat2.SetChild(successAction)
 
 	repeat2.ExecuteTick()
@@ -236,7 +182,7 @@ func TestRepeat(t *testing.T) {
 func TestRepeatAsync(t *testing.T) {
 	cfg := core.NewNodeConfig()
 	cfg.InputPorts["num_cycles"] = "3"
-	repeat := NewRepeatNode("repeat", cfg)
+	repeat := decorator.NewRepeatNode("repeat", cfg)
 
 	actionCfg := core.NewNodeConfig()
 	actionCfg.InputPorts["return_status"] = "SUCCESS"
@@ -262,11 +208,11 @@ func TestRepeatAsync(t *testing.T) {
 func TestTimeoutAndRetry_Issue57(t *testing.T) {
 	timeoutCfg := core.NewNodeConfig()
 	timeoutCfg.InputPorts["msec"] = "5"
-	timeout := NewTimeoutNode("deadline", timeoutCfg)
+	timeout := decorator.NewTimeoutNode("deadline", timeoutCfg)
 
 	retryCfg := core.NewNodeConfig()
 	retryCfg.InputPorts["num_attempts"] = "1000"
-	retry := NewRetryNode("retry", retryCfg)
+	retry := decorator.NewRetryNode("retry", retryCfg)
 
 	failAction := newSyncFailAction("action")
 	retry.SetChild(failAction)
@@ -298,11 +244,7 @@ func TestTimeoutAndRetry_Issue57(t *testing.T) {
 
 // TestRunOnce verifies that RunOnce ticks its child only once.
 func TestRunOnce(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := []int{0, 0}
 	core.RegisterTestTick(factory, "Test", counters)
@@ -339,11 +281,7 @@ func TestRunOnce(t *testing.T) {
 
 // TestDelayWithXML verifies that DelayNode waits before ticking its child.
 func TestDelayWithXML(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -393,11 +331,7 @@ func TestDelayWithXML(t *testing.T) {
 // TestForceFailure_ChildSuccess verifies that ForceFailure returns FAILURE
 // when the child succeeds.
 func TestForceFailure_ChildSuccess(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -421,11 +355,7 @@ func TestForceFailure_ChildSuccess(t *testing.T) {
 // TestForceFailure_ChildFailure verifies that ForceFailure returns FAILURE
 // when the child also fails.
 func TestForceFailure_ChildFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -449,11 +379,7 @@ func TestForceFailure_ChildFailure(t *testing.T) {
 // TestForceSuccess_ChildFailure verifies that ForceSuccess returns SUCCESS
 // even when the child fails.
 func TestForceSuccess_ChildFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -477,11 +403,7 @@ func TestForceSuccess_ChildFailure(t *testing.T) {
 // TestForceSuccess_ChildSuccess verifies that ForceSuccess returns SUCCESS
 // when the child succeeds.
 func TestForceSuccess_ChildSuccess(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -505,11 +427,7 @@ func TestForceSuccess_ChildSuccess(t *testing.T) {
 // TestInverter_ChildSuccess verifies that Inverter returns FAILURE when
 // the child succeeds.
 func TestInverter_ChildSuccess(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -533,11 +451,7 @@ func TestInverter_ChildSuccess(t *testing.T) {
 // TestInverter_ChildFailure verifies that Inverter returns SUCCESS when
 // the child fails.
 func TestInverter_ChildFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -561,11 +475,7 @@ func TestInverter_ChildFailure(t *testing.T) {
 // TestInverterInSequence verifies that Inverter within a Sequence works
 // correctly (inverts child FAILURE to SUCCESS so the sequence continues).
 func TestInverterInSequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -592,11 +502,7 @@ func TestInverterInSequence(t *testing.T) {
 // TestKeepRunningUntilFailure verifies that KeepRunningUntilFailure ticks
 // the child repeatedly until the child returns FAILURE.
 func TestKeepRunningUntilFailure(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	registerTestNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	tickCount := 0
 	factory.RegisterSimpleAction("SuccessThenFail", func(core.TreeNode) core.NodeStatus {

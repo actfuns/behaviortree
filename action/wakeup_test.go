@@ -1,27 +1,17 @@
-package action
+package action_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestWakeUp_BasicTest verifies that an async action wakes up the tree when done.
 // In the Go port, TestNode with async_delay triggers a wake-up signal when the timer fires.
 func TestWakeUp_BasicTest(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_ = factory.RegisterNodeType("Sleep", core.PortsList{
-		"msec": core.NewPortInfo(core.INPUT),
-	}, func(name string, config core.NodeConfig) core.TreeNode {
-		return NewSleepNode(name, config)
-	}, core.Action)
+	factory := factory.NewBehaviorTreeFactory()
 
 	xml := `
 	<root BTCPP_format="4">

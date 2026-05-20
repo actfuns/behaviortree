@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/actfuns/behaviortree/core"
+	"github.com/actfuns/behaviortree/script"
 )
 
 // TestNodeConfig configures the behavior of TestNode.
@@ -55,13 +56,22 @@ func NewTestNode(name string, cfg core.NodeConfig, testConfig *TestNodeConfig) *
 	}
 
 	if testConfig.SuccessScript != "" {
-		n.successExecutor = core.ParseScriptExpr(testConfig.SuccessScript)
+		fn, err := script.ParseScript(testConfig.SuccessScript)
+		if err == nil {
+			n.successExecutor = fn
+		}
 	}
 	if testConfig.FailureScript != "" {
-		n.failureExecutor = core.ParseScriptExpr(testConfig.FailureScript)
+		fn, err := script.ParseScript(testConfig.FailureScript)
+		if err == nil {
+			n.failureExecutor = fn
+		}
 	}
 	if testConfig.PostScript != "" {
-		n.postExecutor = core.ParseScriptExpr(testConfig.PostScript)
+		fn, err := script.ParseScript(testConfig.PostScript)
+		if err == nil {
+			n.postExecutor = fn
+		}
 	}
 
 	return n

@@ -152,7 +152,6 @@ func (bb *Blackboard) Get(key string, dest interface{}) (bool, error) {
 		return false, nil
 	}
 
-
 	if entry.value.IsEmpty() {
 		return false, nil
 	}
@@ -180,7 +179,6 @@ func (bb *Blackboard) GetInto(key string, dest interface{}) error {
 		return fmt.Errorf("Blackboard::get() error. Missing key [%s]", key)
 	}
 
-
 	if entry.value.IsEmpty() {
 		return fmt.Errorf("Blackboard::get() error. Entry [%s] hasn't been initialized, yet", key)
 	}
@@ -194,7 +192,6 @@ func (bb *Blackboard) GetStamped(key string, dest interface{}) (*Timestamp, erro
 	if entry == nil {
 		return nil, fmt.Errorf("Blackboard::getStamped() error. Missing key [%s]", key)
 	}
-
 
 	if entry.value.IsEmpty() {
 		return nil, fmt.Errorf("Blackboard::getStamped() error. Entry [%s] hasn't been initialized, yet", key)

@@ -1,4 +1,4 @@
-package script
+package script_test
 
 import (
 	"testing"
@@ -6,17 +6,18 @@ import (
 	"github.com/actfuns/behaviortree/action"
 	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
+	"github.com/actfuns/behaviortree/script"
 )
 
 // GetScriptResult evaluates a script and returns the result of the last expression.
 // Equivalent of C++ helper in tests.
 func GetScriptResult(blackboard *core.Blackboard, enums *core.ScriptingEnumsRegistry, text string) (core.Any, error) {
-	return ParseScriptAndExecute(blackboard, enums, text)
+	return script.ParseScriptAndExecute(blackboard, enums, text)
 }
 
 // registerScriptNodes registers nodes needed for XML-based script tests.
-func registerScriptNodes(factory *core.BehaviorTreeFactory) {
+func registerScriptNodes(factory core.BehaviorTreeFactory) {
 	_ = factory.RegisterNodeType("Sequence", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		return control.NewSequenceNode(name, config)
 	}, core.Control)
@@ -42,8 +43,8 @@ func registerScriptNodes(factory *core.BehaviorTreeFactory) {
 func TestAnyTypes(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustParse := func(script string) (core.Any, error) {
-		return ParseScriptAndExecute(bb, nil, script)
+	mustParse := func(s string) (core.Any, error) {
+		return script.ParseScriptAndExecute(bb, nil, s)
 	}
 
 	// Integer
@@ -179,25 +180,25 @@ func TestAnyTypes(t *testing.T) {
 
 // TestAnyTypes_Failing verifies that invalid scripts fail.
 func TestAnyTypes_Failing(t *testing.T) {
-	if err := ValidateScript("0X100g"); err == nil {
+	if err := script.ValidateScript("0X100g"); err == nil {
 		t.Error("Expected error for '0X100g'")
 	}
-	if err := ValidateScript("0X100."); err == nil {
+	if err := script.ValidateScript("0X100."); err == nil {
 		t.Error("Expected error for '0X100.'")
 	}
-	if err := ValidateScript("3foo"); err == nil {
+	if err := script.ValidateScript("3foo"); err == nil {
 		t.Error("Expected error for '3foo'")
 	}
-	if err := ValidateScript("65."); err == nil {
+	if err := script.ValidateScript("65."); err == nil {
 		t.Error("Expected error for '65.'")
 	}
-	if err := ValidateScript("65.43foo"); err == nil {
+	if err := script.ValidateScript("65.43foo"); err == nil {
 		t.Error("Expected error for '65.43foo'")
 	}
 
 	// "foo" is a valid identifier (parses as ExprName), only fails at evaluation.
 	bb := core.NewBlackboard(nil)
-	_, err := ParseScriptAndExecute(bb, nil, "foo")
+	_, err := script.ParseScriptAndExecute(bb, nil, "foo")
 	if err == nil {
 		t.Error("Expected error for undefined variable 'foo'")
 	}
@@ -207,10 +208,10 @@ func TestAnyTypes_Failing(t *testing.T) {
 func TestEquations(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -372,23 +373,23 @@ func TestEquations(t *testing.T) {
 	}
 
 	// Type mismatch should fail
-	_, err = ParseScriptAndExecute(bb, nil, "x='msg'")
+	_, err = script.ParseScriptAndExecute(bb, nil, "x='msg'")
 	if err == nil {
 		t.Error("Expected error for type mismatch: x is number, trying to assign string")
 	}
 
 	// Invalid assignment: can't assign to literal
-	_, err = ParseScriptAndExecute(bb, nil, "'hello' = 'world'")
+	_, err = script.ParseScriptAndExecute(bb, nil, "'hello' = 'world'")
 	if err == nil {
 		t.Error("Expected error for invalid assignment to string literal")
 	}
-	_, err = ParseScriptAndExecute(bb, nil, "3.0 = 2.0")
+	_, err = script.ParseScriptAndExecute(bb, nil, "3.0 = 2.0")
 	if err == nil {
 		t.Error("Expected error for invalid assignment to number literal")
 	}
 
 	prevSize := len(bb.GetKeys())
-	_, err = ParseScriptAndExecute(bb, nil, "new_var=69")
+	_, err = script.ParseScriptAndExecute(bb, nil, "new_var=69")
 	if err == nil {
 		t.Error("Expected error for assignment to non-existing variable with '='")
 	}
@@ -547,22 +548,22 @@ func TestNotInitializedComparison(t *testing.T) {
 	bb.CreateEntry("x", core.NewPortInfo(core.INOUT))
 
 	// These should fail because x is not initialized
-	_, err := ParseScriptAndExecute(bb, nil, "x < 0")
+	_, err := script.ParseScriptAndExecute(bb, nil, "x < 0")
 	if err == nil {
 		t.Error("Expected error for uninitialized comparison x < 0")
 	}
 
-	_, err = ParseScriptAndExecute(bb, nil, "x == 0")
+	_, err = script.ParseScriptAndExecute(bb, nil, "x == 0")
 	if err == nil {
 		t.Error("Expected error for uninitialized comparison x == 0")
 	}
 
-	_, err = ParseScriptAndExecute(bb, nil, "x + 1")
+	_, err = script.ParseScriptAndExecute(bb, nil, "x + 1")
 	if err == nil {
 		t.Error("Expected error for uninitialized arithmetic x + 1")
 	}
 
-	_, err = ParseScriptAndExecute(bb, nil, "x += 1")
+	_, err = script.ParseScriptAndExecute(bb, nil, "x += 1")
 	if err == nil {
 		t.Error("Expected error for uninitialized compound assignment x += 1")
 	}
@@ -577,10 +578,10 @@ func TestEnumsBasic(t *testing.T) {
 		"GREEN": 5,
 	}
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, enums, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, enums, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -606,10 +607,10 @@ func TestEnumsBasic(t *testing.T) {
 func TestOperatorAssociativity(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -675,10 +676,10 @@ func TestOperatorAssociativity(t *testing.T) {
 func TestCompareWithNegativeNumber(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -715,10 +716,10 @@ func TestCompareWithNegativeNumber(t *testing.T) {
 	}
 
 	// ValidateScript accepts these
-	if err := ValidateScript("A:=0; A!=-1"); err != nil {
+	if err := script.ValidateScript("A:=0; A!=-1"); err != nil {
 		t.Errorf("ValidateScript failed for 'A:=0; A!=-1': %v", err)
 	}
-	if err := ValidateScript("A:=0; A>-1"); err != nil {
+	if err := script.ValidateScript("A:=0; A>-1"); err != nil {
 		t.Errorf("ValidateScript failed for 'A:=0; A>-1': %v", err)
 	}
 }
@@ -726,29 +727,29 @@ func TestCompareWithNegativeNumber(t *testing.T) {
 // TestTokenizerEdgeCases tests various edge cases in the tokenizer.
 func TestTokenizerEdgeCases(t *testing.T) {
 	// Unterminated string
-	if err := ValidateScript("'hello"); err == nil {
+	if err := script.ValidateScript("'hello"); err == nil {
 		t.Error("Expected error for unterminated string")
 	}
 
 	// Hex edge cases
-	if err := ValidateScript("0x"); err == nil {
+	if err := script.ValidateScript("0x"); err == nil {
 		t.Error("Expected error for '0x'")
 	}
-	if err := ValidateScript("0xG"); err == nil {
+	if err := script.ValidateScript("0xG"); err == nil {
 		t.Error("Expected error for '0xG'")
 	}
 
 	// Exponent without digits
-	if err := ValidateScript("3e"); err == nil {
+	if err := script.ValidateScript("3e"); err == nil {
 		t.Error("Expected error for '3e'")
 	}
-	if err := ValidateScript("3e+"); err == nil {
+	if err := script.ValidateScript("3e+"); err == nil {
 		t.Error("Expected error for '3e+'")
 	}
 
 	// DotDot adjacent to integer
 	bb := core.NewBlackboard(nil)
-	result, err := ParseScriptAndExecute(bb, nil, "A:='65'; B:='66'; A..B")
+	result, err := script.ParseScriptAndExecute(bb, nil, "A:='65'; B:='66'; A..B")
 	if err != nil {
 		t.Fatalf("DotDot parse failed: %v", err)
 	}
@@ -758,10 +759,10 @@ func TestTokenizerEdgeCases(t *testing.T) {
 	}
 
 	// Empty and whitespace-only scripts
-	if err := ValidateScript(""); err == nil {
+	if err := script.ValidateScript(""); err == nil {
 		t.Error("Expected error for empty script")
 	}
-	if err := ValidateScript("   "); err == nil {
+	if err := script.ValidateScript("   "); err == nil {
 		t.Error("Expected error for whitespace-only script")
 	}
 }
@@ -770,10 +771,10 @@ func TestTokenizerEdgeCases(t *testing.T) {
 func TestChainedComparisons(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -831,10 +832,10 @@ func TestChainedComparisons(t *testing.T) {
 func TestOperatorPrecedence(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -886,10 +887,10 @@ func TestOperatorPrecedence(t *testing.T) {
 func TestUnaryOperators(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -931,10 +932,10 @@ func TestUnaryOperators(t *testing.T) {
 func TestTernaryExpressions(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -982,10 +983,10 @@ func TestTernaryExpressions(t *testing.T) {
 func TestMultipleStatements(t *testing.T) {
 	bb := core.NewBlackboard(nil)
 
-	mustExec := func(script string) core.Any {
-		result, err := ParseScriptAndExecute(bb, nil, script)
+	mustExec := func(s string) core.Any {
+		result, err := script.ParseScriptAndExecute(bb, nil, s)
 		if err != nil {
-			t.Fatalf("Script '%s' failed: %v", script, err)
+			t.Fatalf("Script '%s' failed: %v", s, err)
 		}
 		return result
 	}
@@ -1016,10 +1017,7 @@ func TestMultipleStatements(t *testing.T) {
 // TestEnumsXML verifies enum support via XML tree with factory.
 // Equivalent of C++ ParserTest/EnumsXML.
 func TestEnumsXML(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerScriptNodes(factory)
 
 	const xmlText = `
@@ -1065,10 +1063,7 @@ func TestEnumsXML(t *testing.T) {
 // TestEnums_Issue523 verifies enum usage with port remapping and _skipIf.
 // Equivalent of C++ ParserTest/Enums_Issue_523.
 func TestEnums_Issue523(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerScriptNodes(factory)
 
 	const xmlText = `
@@ -1140,10 +1135,7 @@ func TestEnums_Issue523(t *testing.T) {
 // TestIssue595 verifies _skipIf with uint8 output port.
 // Equivalent of C++ ParserTest/Issue595.
 func TestIssue595(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerScriptNodes(factory)
 
 	const xmlText = `
@@ -1185,11 +1177,11 @@ func TestIssue595(t *testing.T) {
 // TestValidateScriptLargeError verifies ValidateScript doesn't crash on large invalid scripts.
 // Equivalent of C++ ParserTest/ValidateScriptLargeError_Issue923.
 func TestValidateScriptLargeError(t *testing.T) {
-	script := ""
+	s := ""
 	for i := 0; i < 20; i++ {
-		script += "+6e66>6666.6+66\r6>6;6e62=6+6e66>66666'; en';o';o'; en'; "
+		s += "+6e66>6666.6+66\r6>6;6e62=6+6e66>66666'; en';o';o'; en'; "
 	}
-	err := ValidateScript(script)
+	err := script.ValidateScript(s)
 	if err == nil {
 		t.Log("Expected invalid script to fail validation (no crash was the main concern)")
 	}
@@ -1198,10 +1190,7 @@ func TestValidateScriptLargeError(t *testing.T) {
 // TestNewLine verifies XML &#10; entity is handled in scripts.
 // Equivalent of C++ ParserTest/NewLine.
 func TestNewLine(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
+	factory := factory.NewBehaviorTreeFactory()
 	registerScriptNodes(factory)
 
 	const xmlText = `

@@ -3,20 +3,14 @@ package core_test
 import (
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 // TestPreconditionsIntegers verifies that integer preconditions with _failureIf
 // and _successIf work correctly on <Precondition> decorator nodes.
 func TestPreconditionsIntegers(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -59,11 +53,7 @@ func TestPreconditionsIntegers(t *testing.T) {
 // TestPreconditionsDoubleEquals verifies that floating-point comparisons
 // work in precondition scripts.
 func TestPreconditionsDoubleEquals(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -102,11 +92,7 @@ func TestPreconditionsDoubleEquals(t *testing.T) {
 // TestPreconditionsStringEquals verifies that string comparisons work in
 // precondition scripts.
 func TestPreconditionsStringEquals(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -149,11 +135,7 @@ func TestPreconditionsStringEquals(t *testing.T) {
 // Precondition decorator are not re-evaluated while the child is running.
 // Uses _skipIf on the child to prevent it from ticking when the condition is met.
 func TestPreconditionsChecksConditionOnce(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 	factory.RegisterNodeType("KeepRunning", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		return newKeepRunning(name, config)
 	}, core.Condition)
@@ -193,11 +175,7 @@ func TestPreconditionsChecksConditionOnce(t *testing.T) {
 // TestPreconditionsBasic verifies _successIf and _failureIf attributes
 // on action nodes and within a Fallback.
 func TestPreconditionsBasic(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 4)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -242,11 +220,7 @@ func TestPreconditionsBasic(t *testing.T) {
 // TestPreconditionsIssue533 verifies _skipIf with _onSuccess for progressive
 // state changes over multiple ticks.
 func TestPreconditionsIssue533(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
 	core.RegisterTestTick(factory, "Test", counters)
@@ -309,11 +283,7 @@ func TestPreconditionsIssue533(t *testing.T) {
 // TestPreconditionsIssue585 verifies that _skipIf prevents a coroutine-style
 // action from being ticked even once.
 func TestPreconditionsIssue585(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	timesTicked := 0
 	factory.RegisterNodeType("CoroTest", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
@@ -347,11 +317,7 @@ func TestPreconditionsIssue585(t *testing.T) {
 // TestPreconditionsIssue615_NoSkipWhenRunningA verifies that _skipIf is
 // not re-evaluated when KeepRunningUntilFailure is in RUNNING state.
 func TestPreconditionsIssue615_NoSkipWhenRunningA(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	// Use a string comparison instead of bool comparison to avoid type issues.
 	const xmlText = `
@@ -386,11 +352,7 @@ func TestPreconditionsIssue615_NoSkipWhenRunningA(t *testing.T) {
 // TestPreconditionsIssue615_NoSkipWhenRunningB verifies that _skipIf is
 // evaluated only when node is IDLE, not when RUNNING.
 func TestPreconditionsIssue615_NoSkipWhenRunningB(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 	factory.RegisterNodeType("KeepRunning", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		return newKeepRunning(name, config)
 	}, core.Condition)
@@ -431,11 +393,7 @@ func TestPreconditionsIssue615_NoSkipWhenRunningB(t *testing.T) {
 // TestPreconditionsRemapping verifies that port remapping through subtrees
 // works correctly with _skipIf.
 func TestPreconditionsRemapping(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	factory.RegisterNodeType("SimpleOutput", core.PortsList(func() map[string]core.PortInfo {
 		_, outputPort := core.OutputPort[bool]("output", "")
@@ -493,11 +451,7 @@ func TestPreconditionsRemapping(t *testing.T) {
 // while the node is RUNNING). In the Go port, _while on an IDLE node returns
 // SKIPPED, so we test the halt-on-running behavior by halting manually.
 func TestPreconditionsWhileCallsOnHalt(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 	factory.RegisterNodeType("KeepRunning", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
 		return newKeepRunning(name, config)
 	}, core.Condition)
@@ -538,11 +492,7 @@ func TestPreconditionsWhileCallsOnHalt(t *testing.T) {
 // TestPreconditionsSkippedSequence verifies that a node with _skipIf inside
 // a Sequence causes the Sequence to return SKIPPED.
 func TestPreconditionsSkippedSequence(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -586,11 +536,7 @@ func TestPreconditionsSkippedSequence(t *testing.T) {
 // TestPreconditionsCanRunChildrenMultipleTimes verifies that preconditions
 // within a Repeat loop are evaluated correctly on each cycle.
 func TestPreconditionsCanRunChildrenMultipleTimes(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
 	core.RegisterTestTick(factory, "Test", counters)

@@ -6,18 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
-	_ "github.com/actfuns/behaviortree/script"
-	_ "github.com/actfuns/behaviortree/xml"
+	"github.com/actfuns/behaviortree/factory"
 )
 
 func TestTree_Condition1ToFalseCondition2True(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	condition1Called := false
 	condition2Called := false
@@ -70,11 +64,7 @@ func TestTree_Condition1ToFalseCondition2True(t *testing.T) {
 }
 
 func TestTree_Condition2ToFalseCondition1True(t *testing.T) {
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	condition1Called := false
 	condition2Called := false
@@ -134,12 +124,7 @@ func TestTree_PrintWithStream(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	factory, err := core.NewBehaviorTreeFactory()
-	if err != nil {
-		os.Stdout = old
-		t.Fatal(err)
-	}
-	control.RegisterStandardNodes(factory)
+	factory := factory.NewBehaviorTreeFactory()
 
 	_ = factory.RegisterSimpleAction("Condition1", func(core.TreeNode) core.NodeStatus {
 		return core.SUCCESS
