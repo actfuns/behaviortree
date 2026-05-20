@@ -60,7 +60,7 @@ func (p *xmlParser) LoadFromText(xmlText string, addIncludes bool) error {
 	return p.parseXML(xmlText, addIncludes)
 }
 
-func (p *xmlParser) loadFromFile(path string, addIncludes bool) error {
+func (p *xmlParser) LoadFromFile(path string, addIncludes bool) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (p *xmlParser) processRoot(root *xmlNode, addIncludes bool) error {
 				if !filepath.IsAbs(filePath) {
 					filePath = filepath.Join(p.currentDir, filePath)
 				}
-				if err := p.loadFromFile(filePath, addIncludes); err != nil {
+				if err := p.LoadFromFile(filePath, addIncludes); err != nil {
 					return err
 				}
 			}

@@ -6,7 +6,6 @@ package factory
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -464,11 +463,13 @@ func (f *behaviorTreeFactory) RegisterBehaviorTreeFromText(xmlText string) {
 
 // RegisterBehaviorTreeFromFile registers a behavior tree definition from an XML file.
 func (f *behaviorTreeFactory) RegisterBehaviorTreeFromFile(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
+	parser := xml.NewXMLParser(f)
+	if err := parser.LoadFromFile(path, true); err != nil {
 		return fmt.Errorf("RegisterBehaviorTreeFromFile: %w", err)
 	}
-	f.RegisterBehaviorTreeFromText(string(data))
+	for _, name := range parser.RegisteredTreeNames() {
+		f.StoreRegisteredTreeXML(name, "")
+	}
 	return nil
 }
 
