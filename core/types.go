@@ -572,3 +572,91 @@ func GetRemappedKey(portName, remappedPort string) (string, bool) {
 	}
 	return "", false
 }
+
+// NodeBuilder creates a new TreeNode instance.
+type NodeBuilder func(name string, config NodeConfig) TreeNode
+
+// BehaviorTreeFactory defines the interface for registering and creating
+// behavior tree nodes. Implementations manage node type registries, XML
+// tree storage, and tree instantiation.
+type BehaviorTreeFactory interface {
+	// RegisterBuilder registers a node builder with a manifest.
+	RegisterBuilder(manifest TreeNodeManifest, builder NodeBuilder) error
+
+	// RegisterNodeType registers a node type with a builder function.
+	RegisterNodeType(id string, ports PortsList, builder NodeBuilder, nodeType NodeType) error
+
+	// RegisterSimpleAction registers a simple action node.
+	RegisterSimpleAction(id string, tickFn func(TreeNode) NodeStatus, ports PortsList) error
+
+	// RegisterSimpleCondition registers a simple condition node.
+	RegisterSimpleCondition(id string, tickFn func(TreeNode) NodeStatus, ports PortsList) error
+
+	// RegisterSimpleDecorator registers a simple decorator node.
+	RegisterSimpleDecorator(id string, tickFn func(NodeStatus, TreeNode) NodeStatus, ports PortsList) error
+
+	// RegisterScriptingEnum adds an enum value to the scripting language.
+	RegisterScriptingEnum(name string, value int)
+
+	// ScriptingEnums returns the registry of scripting enums.
+	ScriptingEnums() *ScriptingEnumsRegistry
+
+	// InstantiateTreeNode creates an instance of a previously registered TreeNode.
+	InstantiateTreeNode(name, id string, config NodeConfig) (TreeNode, error)
+
+	// Builders returns all registered builders.
+	Builders() map[string]NodeBuilder
+
+	// Manifests returns all registered manifests.
+	Manifests() map[string]TreeNodeManifest
+
+	// RegisteredBehaviorTrees returns the IDs of registered behavior trees.
+	RegisteredBehaviorTrees() []string
+
+	// ClearRegisteredBehaviorTrees clears previously-registered behavior trees.
+	ClearRegisteredBehaviorTrees()
+
+	// RegisterBehaviorTreeFromText registers a behavior tree definition from XML text.
+	RegisterBehaviorTreeFromText(xmlText string)
+
+	// RegisterBehaviorTreeFromFile registers a behavior tree definition from an XML file.
+	RegisterBehaviorTreeFromFile(path string) error
+
+	// StoreRegisteredTreeXML stores the XML text for a specific tree ID.
+	StoreRegisteredTreeXML(treeID string, xmlText string)
+
+	// GetRegisteredTreeXML returns the XML text for a specific tree ID.
+	GetRegisteredTreeXML(treeID string) string
+
+	// CreateTree creates a tree from a registered behavior tree.
+	CreateTree(treeName string, blackboard *Blackboard) (*Tree, error)
+
+	// CreateTreeFromText creates a tree directly from XML text.
+	CreateTreeFromText(xmlText string, blackboard *Blackboard) (*Tree, error)
+
+	// AddSubstitutionRule adds a rule to substitute nodes during tree creation.
+	AddSubstitutionRule(filter string, rule SubstitutionRule)
+
+	// ClearSubstitutionRules removes all substitution rules.
+	ClearSubstitutionRules()
+
+	// SubstitutionRules returns the current substitution rules.
+	SubstitutionRules() map[string]SubstitutionRule
+
+	// LoadSubstitutionRuleFromJSON parses a JSON string containing substitution rules.
+	LoadSubstitutionRuleFromJSON(jsonText string) error
+
+	// AddMetadataToManifest adds metadata to an existing node manifest.
+	AddMetadataToManifest(registrationID string, metadata KeyValueVector)
+
+	// UnregisterBuilder removes a previously registered node builder.
+	UnregisterBuilder(id string) error
+
+	// BuiltinNodes returns the set of builtin node IDs.
+	BuiltinNodes() map[string]bool
+}
+
+// SubstitutionRule replaces a node with another when the tree is created.
+type SubstitutionRule struct {
+	ReplaceWith string
+}

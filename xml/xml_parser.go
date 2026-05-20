@@ -31,7 +31,7 @@ type xmlNode struct {
 // ---------------------------------------------------------------------------
 
 type xmlParser struct {
-	factory        *core.BehaviorTreeFactory
+	factory        core.BehaviorTreeFactory
 	treeRoots      map[string]*xmlNode // tree ID -> BehaviorTree element children
 	subtreeModels  map[string]subtreeModel
 	currentDir     string
@@ -44,7 +44,7 @@ type subtreeModel struct {
 }
 
 // NewXMLParser creates a new XML parser bound to a factory.
-func NewXMLParser(factory *core.BehaviorTreeFactory) *xmlParser {
+func NewXMLParser(factory core.BehaviorTreeFactory) *xmlParser {
 	return &xmlParser{
 		factory:       factory,
 		treeRoots:     make(map[string]*xmlNode),
@@ -56,8 +56,7 @@ func NewXMLParser(factory *core.BehaviorTreeFactory) *xmlParser {
 // ---------------------------------------------------------------------------
 // XML token-based parsing (builds our simple xmlNode tree)
 // ---------------------------------------------------------------------------
-
-func (p *xmlParser) loadFromText(xmlText string, addIncludes bool) error {
+func (p *xmlParser) LoadFromText(xmlText string, addIncludes bool) error {
 	return p.parseXML(xmlText, addIncludes)
 }
 
@@ -760,7 +759,7 @@ func parseNodeType(name string) core.NodeType {
 // ---------------------------------------------------------------------------
 
 // ParseXMLAndCreateTree parses previously registered XML and creates a tree.
-func ParseXMLAndCreateTree(factory *core.BehaviorTreeFactory, treeName string, blackboard *core.Blackboard) (*core.Tree, error) {
+func ParseXMLAndCreateTree(factory core.BehaviorTreeFactory, treeName string, blackboard *core.Blackboard) (*core.Tree, error) {
 	xmlText := factory.GetRegisteredTreeXML(treeName)
 	if xmlText == "" {
 		return nil, fmt.Errorf("No registered behavior tree found with ID: %s", treeName)
@@ -772,13 +771,13 @@ func ParseXMLAndCreateTree(factory *core.BehaviorTreeFactory, treeName string, b
 	for _, tn := range factory.RegisteredBehaviorTrees() {
 		prevXML := factory.GetRegisteredTreeXML(tn)
 		if prevXML != "" && prevXML != xmlText {
-			if err := parser.loadFromText(prevXML, false); err != nil {
+			if err := parser.LoadFromText(prevXML, false); err != nil {
 				return nil, fmt.Errorf("XML parse error for registered tree '%s': %v", tn, err)
 			}
 		}
 	}
 
-	if err := parser.loadFromText(xmlText, true); err != nil {
+	if err := parser.LoadFromText(xmlText, true); err != nil {
 		return nil, fmt.Errorf("XML parse error: %v", err)
 	}
 
@@ -796,7 +795,7 @@ func ParseXMLAndCreateTree(factory *core.BehaviorTreeFactory, treeName string, b
 }
 
 // ParseXMLAndCreateTreeFromText parses XML text and creates a tree immediately.
-func ParseXMLAndCreateTreeFromText(factory *core.BehaviorTreeFactory, xmlText string, blackboard *core.Blackboard) (*core.Tree, error) {
+func ParseXMLAndCreateTreeFromText(factory core.BehaviorTreeFactory, xmlText string, blackboard *core.Blackboard) (*core.Tree, error) {
 	parser := NewXMLParser(factory)
 
 	// Load previously-registered trees from the factory first.
@@ -805,13 +804,13 @@ func ParseXMLAndCreateTreeFromText(factory *core.BehaviorTreeFactory, xmlText st
 	for _, treeName := range factory.RegisteredBehaviorTrees() {
 		prevXML := factory.GetRegisteredTreeXML(treeName)
 		if prevXML != "" && prevXML != xmlText {
-			if err := parser.loadFromText(prevXML, false); err != nil {
+			if err := parser.LoadFromText(prevXML, false); err != nil {
 				return nil, fmt.Errorf("XML parse error for registered tree '%s': %v", treeName, err)
 			}
 		}
 	}
 
-	if err := parser.loadFromText(xmlText, true); err != nil {
+	if err := parser.LoadFromText(xmlText, true); err != nil {
 		return nil, fmt.Errorf("XML parse error: %v", err)
 	}
 
@@ -849,22 +848,6 @@ func ParseXMLAndCreateTreeFromText(factory *core.BehaviorTreeFactory, xmlText st
 	// Set the factory manifests
 	tree.Manifests = factory.Manifests()
 	return tree, nil
-}
-
-// init registers the XML parser with the core package.
-func init() {
-	core.RegisterXMLParser(func(factory *core.BehaviorTreeFactory, xmlText string) {
-		parser := NewXMLParser(factory)
-		if err := parser.loadFromText(xmlText, true); err != nil {
-			panic(fmt.Sprintf("XML parse error: %v", err))
-		}
-		for _, name := range parser.RegisteredTreeNames() {
-			factory.StoreRegisteredTreeXML(name, xmlText)
-		}
-	})
-
-	core.ParseXMLAndCreateTree = ParseXMLAndCreateTree
-	core.ParseXMLAndCreateTreeFromText = ParseXMLAndCreateTreeFromText
 }
 
 // ---------------------------------------------------------------------------

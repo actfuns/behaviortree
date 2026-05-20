@@ -41,7 +41,7 @@ func portDirToElemName(d core.PortDirection) string {
 // WriteTreeNodesModelXML generates the <TreeNodesModel> XML for all node
 // manifests registered in the factory. When includeBuiltin is false, the
 // built-in node types (e.g. SubTree) are excluded.
-func WriteTreeNodesModelXML(factory *core.BehaviorTreeFactory, includeBuiltin bool) string {
+func WriteTreeNodesModelXML(factory core.BehaviorTreeFactory, includeBuiltin bool) string {
 	manifests := factory.Manifests()
 	builtins := factory.BuiltinNodes()
 

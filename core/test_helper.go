@@ -14,7 +14,7 @@ func TestTick(tickCounter *int) NodeStatus {
 // RegisterTestTick registers simple actions named prefix+"A", prefix+"B", etc.
 // Equivalent of C++ RegisterTestTick template in test_helper.hpp.
 // Each action increments its corresponding counter in tickCounters and returns SUCCESS.
-func RegisterTestTick(factory *BehaviorTreeFactory, namePrefix string, tickCounters []int) {
+func RegisterTestTick(factory BehaviorTreeFactory, namePrefix string, tickCounters []int) {
 	for i := 0; i < len(tickCounters); i++ {
 		tickCounters[i] = 0
 		actionName := fmt.Sprintf("%s%c", namePrefix, 'A'+rune(i))
