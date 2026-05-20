@@ -43,7 +43,7 @@ func AnyOf(v interface{}) Any {
 	case uint32:
 		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
 	case uint64:
-		return Any{value: int64(val), originalType: reflect.TypeOf(val)}
+		return Any{value: val, originalType: reflect.TypeOf(val)}
 	case float32:
 		return Any{value: float64(val), originalType: reflect.TypeOf(val)}
 	case float64:

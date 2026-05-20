@@ -1,8 +1,6 @@
 package control
 
 import (
-	"log/slog"
-
 	"github.com/actfuns/behaviortree/core"
 )
 
@@ -62,8 +60,8 @@ func (n *SequenceWithMemory) Tick() core.NodeStatus {
 			n.skippedCount++
 
 		case core.IDLE:
-			slog.Error("child returned IDLE during Tick; children should not return IDLE")
-			return core.FAILURE
+			panic(core.NewLogicError("child returned IDLE during Tick"))
+
 		}
 	}
 

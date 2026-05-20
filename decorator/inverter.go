@@ -1,9 +1,5 @@
 package decorator
 
-import (
-	"log/slog"
-)
-
 import "github.com/actfuns/behaviortree/core"
 
 // InverterNode returns SUCCESS if child fails, FAILURE if child succeeds.
@@ -37,8 +33,7 @@ func (n *InverterNode) Tick() core.NodeStatus {
 		return childStatus
 
 	case core.IDLE:
-		slog.Error("child returned IDLE during Tick; children should not return IDLE")
-		return core.FAILURE
+		panic(core.NewLogicError("child returned IDLE during Tick"))
 	}
 
 	return n.Status()

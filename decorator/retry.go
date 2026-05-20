@@ -1,9 +1,5 @@
 package decorator
 
-import (
-	"log/slog"
-)
-
 import "github.com/actfuns/behaviortree/core"
 
 // RetryNode executes a child several times if it fails (RetryUntilSuccessful).
@@ -68,8 +64,8 @@ func (n *RetryNode) Tick() core.NodeStatus {
 			return core.SKIPPED
 
 		case core.IDLE:
-			slog.Error("child returned IDLE during Tick; children should not return IDLE")
-			return core.FAILURE
+			panic(core.NewLogicError("child returned IDLE during Tick"))
+
 		}
 	}
 

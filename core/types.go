@@ -387,6 +387,9 @@ func NewNodeConfig() NodeConfig {
 
 // CreatePort creates a port with the given direction, name, and type.
 func CreatePort[T any](direction PortDirection, name string, description string) (string, PortInfo) {
+	if !IsAllowedPortName(name) {
+		panic(NewRuntimeError("Port name [%s] is not allowed", name))
+	}
 	ti := NewTypeInfo[T]()
 	pi := NewPortInfoTyped(direction, ti)
 	if description != "" {

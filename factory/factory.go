@@ -243,7 +243,9 @@ func (f *behaviorTreeFactory) registerBuiltinNodes() {
 	})
 
 	// SubTree
-	f.registerNodeType(core.Decorator, "SubTree", core.PortsList{}, func(name string, config core.NodeConfig) core.TreeNode {
+	f.registerNodeType(core.Subtree, "SubTree", core.PortsList{
+		"_autoremap": core.NewPortInfo(core.INPUT),
+	}, func(name string, config core.NodeConfig) core.TreeNode {
 		return decorator.NewSubTreeNode(name, config)
 	})
 }

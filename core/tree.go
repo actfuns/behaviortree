@@ -111,6 +111,9 @@ func (t *Tree) tickRoot(opt tickOption, sleepTime time.Duration) NodeStatus {
 
 	case OnceUnlessWokenUp:
 		status := root.ExecuteTick()
+		if status.IsCompleted() {
+			root.ResetStatus()
+		}
 		for t.wakeUp != nil {
 			t.wakeUp.mu.Lock()
 			fired := t.wakeUp.fired
@@ -120,11 +123,17 @@ func (t *Tree) tickRoot(opt tickOption, sleepTime time.Duration) NodeStatus {
 				break
 			}
 			status = root.ExecuteTick()
+			if status.IsCompleted() {
+				root.ResetStatus()
+			}
 		}
 		return status
 
 	case WhileRunning:
 		status := root.ExecuteTick()
+		if status.IsCompleted() {
+			root.ResetStatus()
+		}
 		for status == RUNNING {
 			// Wait for wake-up signal or timeout
 			if t.wakeUp != nil {
@@ -133,6 +142,9 @@ func (t *Tree) tickRoot(opt tickOption, sleepTime time.Duration) NodeStatus {
 				time.Sleep(sleepTime)
 			}
 			status = root.ExecuteTick()
+			if status.IsCompleted() {
+				root.ResetStatus()
+			}
 		}
 		return status
 

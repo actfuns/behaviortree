@@ -1,9 +1,5 @@
 package control
 
-import (
-	"log/slog"
-)
-
 import "github.com/actfuns/behaviortree/core"
 
 // SequenceNode ticks children in an ordered sequence.
@@ -64,8 +60,8 @@ func (n *SequenceNode) Tick() core.NodeStatus {
 			n.skippedCount++
 
 		case core.IDLE:
-			slog.Error("child returned IDLE during Tick; children should not return IDLE")
-			return core.FAILURE
+			panic(core.NewLogicError("child returned IDLE during Tick"))
+
 		}
 	}
 

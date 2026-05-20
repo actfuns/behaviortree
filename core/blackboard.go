@@ -315,9 +315,9 @@ func (bb *Blackboard) Unset(key string) {
 }
 
 // HasKey returns true if the key exists in the blackboard.
+// Matches C++: delegates to getEntry() to check parent/remapping chain.
 func (bb *Blackboard) HasKey(key string) bool {
-	_, ok := bb.storage[key]
-	return ok
+	return bb.GetEntry(key) != nil
 }
 
 // GetKeys returns all keys in the blackboard.

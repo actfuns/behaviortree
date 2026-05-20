@@ -1,7 +1,5 @@
 package core
 
-import "log/slog"
-
 // ActionNodeBase is the base class for action nodes.
 type ActionNodeBase struct {
 	LeafNode
@@ -36,8 +34,7 @@ func (n *SyncActionNode) ExecuteTick() NodeStatus {
 	}
 	status := n.ExecuteTickImpl(self)
 	if status == RUNNING {
-		slog.Error("SyncActionNode must not return RUNNING", "node", n.Name())
-		return FAILURE
+		panic(NewLogicError("SyncActionNode [%s] must not return RUNNING", n.Name()))
 	}
 	return status
 }
@@ -93,16 +90,14 @@ func (n *StatefulActionNode) Tick() NodeStatus {
 		n.haltRequested = false
 		newStatus := n.OnStart()
 		if newStatus == IDLE {
-			slog.Error("StatefulActionNode::onStart() must not return IDLE", "node", n.Name())
-			return FAILURE
+			panic(NewLogicError("StatefulActionNode::onStart() must not return IDLE"))
 		}
 		return newStatus
 	}
 	if prevStatus == RUNNING {
 		newStatus := n.OnRunning()
 		if newStatus == IDLE {
-			slog.Error("StatefulActionNode::onRunning() must not return IDLE", "node", n.Name())
-			return FAILURE
+			panic(NewLogicError("StatefulActionNode::onRunning() must not return IDLE"))
 		}
 		return newStatus
 	}

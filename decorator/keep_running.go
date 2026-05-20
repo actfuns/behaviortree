@@ -43,8 +43,7 @@ func (n *KeepRunningUntilFailureNode) Tick() core.NodeStatus {
 		return core.SKIPPED
 
 	case core.IDLE:
-		slog.Error("child returned IDLE during Tick; children should not return IDLE")
-		return core.FAILURE
+		panic(core.NewLogicError("child returned IDLE during Tick"))
 	}
 
 	slog.Error("Unexpected status in KeepRunningUntilFailure", "node", n.Name())

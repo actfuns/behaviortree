@@ -129,8 +129,8 @@ func (n *ParallelNode) Tick() core.NodeStatus {
 			// Still working, check next
 
 		case core.IDLE:
-			slog.Error("child returned IDLE during Tick; children should not return IDLE")
-			return core.FAILURE
+			panic(core.NewLogicError("child returned IDLE during Tick"))
+
 		}
 
 		requiredSuccess := n.SuccessThreshold()

@@ -1,9 +1,5 @@
 package control
 
-import (
-	"log/slog"
-)
-
 import "github.com/actfuns/behaviortree/core"
 
 // FallbackNode tries different strategies until one succeeds.
@@ -67,8 +63,8 @@ func (n *FallbackNode) Tick() core.NodeStatus {
 			n.skippedCount++
 
 		case core.IDLE:
-			slog.Error("child returned IDLE during Tick; children should not return IDLE")
-			return core.FAILURE
+			panic(core.NewLogicError("child returned IDLE during Tick"))
+
 		}
 	}
 
