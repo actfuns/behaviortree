@@ -1,6 +1,7 @@
 package decorator_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -9,6 +10,19 @@ import (
 	"github.com/actfuns/behaviortree/decorator"
 	"github.com/actfuns/behaviortree/factory"
 )
+
+// registerTestTick registers TestA/TestB/etc actions for testing.
+func registerTestTick(factory core.BehaviorTreeFactory, namePrefix string, tickCounters []int) {
+	for i := 0; i < len(tickCounters); i++ {
+		tickCounters[i] = 0
+		actionName := fmt.Sprintf("%s%c", namePrefix, 'A'+rune(i))
+		counterPtr := &tickCounters[i]
+		_ = factory.RegisterSimpleAction(actionName, func(core.TreeNode) core.NodeStatus {
+			*counterPtr++
+			return core.SUCCESS
+		}, core.PortsList{})
+	}
+}
 
 // simpleSequenceNode is a minimal SequenceNode for testing.
 type simpleSequenceNode struct {
@@ -247,7 +261,7 @@ func TestRunOnce(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := []int{0, 0}
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4">

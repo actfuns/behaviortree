@@ -8,6 +8,19 @@ import (
 	"github.com/actfuns/behaviortree/factory"
 )
 
+// registerTestTick registers TestA/TestB/etc actions for testing.
+func registerTestTick(factory core.BehaviorTreeFactory, namePrefix string, tickCounters []int) {
+	for i := 0; i < len(tickCounters); i++ {
+		tickCounters[i] = 0
+		actionName := fmt.Sprintf("%s%c", namePrefix, 'A'+rune(i))
+		counterPtr := &tickCounters[i]
+		_ = factory.RegisterSimpleAction(actionName, func(core.TreeNode) core.NodeStatus {
+			*counterPtr++
+			return core.SUCCESS
+		}, core.PortsList{})
+	}
+}
+
 // ----------------------------------------------------------------
 // Existing test: TestMoveBaseRecovery
 // ----------------------------------------------------------------
@@ -351,7 +364,7 @@ func TestSubTree_SubtreeIssue592(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	factory.RegisterBehaviorTreeFromText(xmlText)
 	tree, err := factory.CreateTree("Outer_Tree", nil)

@@ -1,12 +1,26 @@
 package control_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/actfuns/behaviortree/control"
 	"github.com/actfuns/behaviortree/core"
 	"github.com/actfuns/behaviortree/factory"
 )
+
+// registerTestTick registers TestA/TestB/etc actions for testing.
+func registerTestTick(factory core.BehaviorTreeFactory, namePrefix string, tickCounters []int) {
+	for i := 0; i < len(tickCounters); i++ {
+		tickCounters[i] = 0
+		actionName := fmt.Sprintf("%s%c", namePrefix, 'A'+rune(i))
+		counterPtr := &tickCounters[i]
+		_ = factory.RegisterSimpleAction(actionName, func(core.TreeNode) core.NodeStatus {
+			*counterPtr++
+			return core.SUCCESS
+		}, core.PortsList{})
+	}
+}
 
 // ============================================================================
 // Helper: RunningNode is a StatefulActionNode that returns RUNNING for a
@@ -951,7 +965,7 @@ func TestControl_Sequence_Issue_636(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4" main_tree_to_execute="MainTree">
@@ -1007,7 +1021,7 @@ func TestControl_Reactive_RunningChildren(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 4)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	registerRunningAction(factory, "AsyncAction", core.SUCCESS, 3)
 
@@ -1065,7 +1079,7 @@ func TestControl_Reactive_Issue587(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1111,7 +1125,7 @@ func TestControl_Reactive_TestLogging(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1198,7 +1212,7 @@ func TestControl_Reactive_FirstChildFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1231,7 +1245,7 @@ func TestControl_Reactive_AllChildrenSucceed(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1430,7 +1444,7 @@ func TestControl_IfThenElse_ConditionTrue_ThenBranch(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1467,7 +1481,7 @@ func TestControl_IfThenElse_ConditionFalse_ElseBranch(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1504,7 +1518,7 @@ func TestControl_IfThenElse_ConditionFalse_TwoChildren(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1537,7 +1551,7 @@ func TestControl_IfThenElse_ThenBranchFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1571,7 +1585,7 @@ func TestControl_IfThenElse_ElseBranchFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1614,7 +1628,7 @@ func TestControl_IfThenElse_ConditionRunning(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1657,7 +1671,7 @@ func TestControl_IfThenElse_HaltBehavior(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1763,7 +1777,7 @@ func TestControl_WhileDoElse_ConditionTrue_DoBranch(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1800,7 +1814,7 @@ func TestControl_WhileDoElse_ConditionFalse_ElseBranch(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1837,7 +1851,7 @@ func TestControl_WhileDoElse_ConditionFalse_TwoChildren(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1870,7 +1884,7 @@ func TestControl_WhileDoElse_DoBranchFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1904,7 +1918,7 @@ func TestControl_WhileDoElse_ElseBranchFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1947,7 +1961,7 @@ func TestControl_WhileDoElse_ConditionChanges_HaltsElse(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -1994,7 +2008,7 @@ func TestControl_WhileDoElse_ConditionChanges_HaltsDo(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2031,7 +2045,7 @@ func TestControl_WhileDoElse_HaltBehavior(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2142,7 +2156,7 @@ func TestControl_WhileDoElse_ConditionRunning(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2438,7 +2452,7 @@ func TestControl_TryCatch_AllTryChildrenSucceed(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2478,7 +2492,7 @@ func TestControl_TryCatch_FirstChildFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2515,7 +2529,7 @@ func TestControl_TryCatch_SecondChildFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2615,7 +2629,7 @@ func TestControl_TryCatch_TryChildRunning(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2724,7 +2738,7 @@ func TestControl_TryCatch_ReExecuteAfterSuccess(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2778,7 +2792,7 @@ func TestControl_TryCatch_ReExecuteAfterFailure(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -2965,7 +2979,7 @@ func TestControl_TryCatch_AsyncCatchCompletesInsideSequence(t *testing.T) {
 	}, core.PortsList{})
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3020,7 +3034,7 @@ func TestControl_TryCatch_SingleTryChild(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3056,7 +3070,7 @@ func TestControl_TryCatch_ManyTryChildren_ThirdFails(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3101,7 +3115,7 @@ func TestControl_Skipping_Sequence(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3138,7 +3152,7 @@ func TestControl_Skipping_SkipAll(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3182,7 +3196,7 @@ func TestControl_Skipping_SkipSubtree(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	xmlText := `
 	<root BTCPP_format="4">
@@ -3254,7 +3268,7 @@ func TestControl_Skipping_WhileSkip(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	// First tree: doit=true, TestA should be ticked (C++ behavior).
 	// Go port: _while on IDLE always returns SKIPPED, so TestA is skipped.
@@ -3320,7 +3334,7 @@ func TestControl_Skipping_SkippingReactiveSequence(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	// XML with value=50, TestA should NOT be skipped (value is not < 25)
 	xmlTextNoskip := `

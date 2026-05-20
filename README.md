@@ -97,10 +97,19 @@ tree, _ := factory.CreateTree("MainTree", blackboard)
 ### 编程方式
 
 ```go
-seq := control.NewSequenceNode("seq", config)
-seq.AddChild(child1)
-seq.AddChild(child2)
-status := seq.ExecuteTick()
+bb := core.NewBlackboard(nil)
+
+seq := control.NewSequenceNode("seq", core.NodeConfig{Blackboard: bb})
+act := action.NewAlwaysSuccessNode("ok", core.NodeConfig{Blackboard: bb})
+seq.AddChild(act)
+
+tree := core.NewTree()
+tree.Subtrees = []*core.TreeSubtree{{
+    Nodes:      []core.TreeNode{seq},
+    Blackboard: bb,
+    TreeID:     "Main",
+}}
+status := tree.TickWhileRunning(0)
 ```
 
 ## 端口系统
@@ -181,4 +190,4 @@ go test github.com/actfuns/behaviortree/...
 
 ## 参考
 
-C++ 原版：[BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP)
+基于 [BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP) **v4.9.0**（commit `e6754eeb`），分支 `BehaviorTree.CPP`。后续新增功能时，请对齐该版本的 API 和行为。

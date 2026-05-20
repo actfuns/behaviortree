@@ -1,11 +1,25 @@
 package core_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/actfuns/behaviortree/core"
 	"github.com/actfuns/behaviortree/factory"
 )
+
+// registerTestTick registers TestA/TestB/etc actions for testing.
+func registerTestTick(factory core.BehaviorTreeFactory, namePrefix string, tickCounters []int) {
+	for i := 0; i < len(tickCounters); i++ {
+		tickCounters[i] = 0
+		actionName := fmt.Sprintf("%s%c", namePrefix, 'A'+rune(i))
+		counterPtr := &tickCounters[i]
+		_ = factory.RegisterSimpleAction(actionName, func(core.TreeNode) core.NodeStatus {
+			*counterPtr++
+			return core.SUCCESS
+		}, core.PortsList{})
+	}
+}
 
 // TestPreconditionsIntegers verifies that integer preconditions with _failureIf
 // and _successIf work correctly on <Precondition> decorator nodes.
@@ -13,7 +27,7 @@ func TestPreconditionsIntegers(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	// Use Precondition if with default else=FAILURE.
 	// A==B is true → TestA runs
@@ -56,7 +70,7 @@ func TestPreconditionsDoubleEquals(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -95,7 +109,7 @@ func TestPreconditionsStringEquals(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -178,7 +192,7 @@ func TestPreconditionsBasic(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 4)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -223,7 +237,7 @@ func TestPreconditionsIssue533(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 3)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4" >
@@ -405,7 +419,7 @@ func TestPreconditionsRemapping(t *testing.T) {
 	}, core.Action)
 
 	counters := make([]int, 2)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4">
@@ -539,7 +553,7 @@ func TestPreconditionsCanRunChildrenMultipleTimes(t *testing.T) {
 	factory := factory.NewBehaviorTreeFactory()
 
 	counters := make([]int, 1)
-	core.RegisterTestTick(factory, "Test", counters)
+	registerTestTick(factory, "Test", counters)
 
 	const xmlText = `
 	<root BTCPP_format="4" >
