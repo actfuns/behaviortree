@@ -13,8 +13,10 @@ type Tree struct {
 	Manifests map[string]TreeNodeManifest
 
 	wakeUp      *WakeUpSignal
+	timerQueue  *TimerQueue
 	uidCounter  atomic.Uint64
 	initialized bool
+	stopped     bool
 }
 
 // TreeSubtree represents a subtree within a tree.
@@ -40,9 +42,12 @@ func (t *Tree) Initialize() {
 		return
 	}
 
+	t.timerQueue = NewTimerQueue()
+
 	for _, subtree := range t.Subtrees {
 		for _, node := range subtree.Nodes {
 			node.SetWakeUpInstance(t.wakeUp)
+			node.SetTimerQueueInstance(t.timerQueue)
 		}
 	}
 
@@ -105,52 +110,48 @@ func (t *Tree) tickRoot(opt tickOption, sleepTime time.Duration) NodeStatus {
 		return FAILURE
 	}
 
-	switch opt {
-	case ExactlyOnce:
-		return root.ExecuteTick()
+	// Matches C++ Tree::tickRoot algorithm:
+	//
+	//   while(status == IDLE || (WHILE_RUNNING && status == RUNNING))
+	//     status = executeTick()
+	//
+	//     // Inner loop: drain wake-up signals without sleeping
+	//     while(opt != EXACTLY_ONCE && status == RUNNING && waitFor(0ms))
+	//       status = executeTick()
+	//
+	//     if(isStatusCompleted) resetStatus()
+	//     if(status == RUNNING && sleep_time > 0) sleep(sleep_time)
+	//
+	// The inner loop is critical for TimerQueue: when a timer callback fires
+	// during a tick and calls emitWakeUpSignal(), the signal is consumed
+	// immediately without any sleep.
 
-	case OnceUnlessWokenUp:
-		status := root.ExecuteTick()
-		if status.IsCompleted() {
-			root.ResetStatus()
-		}
-		for t.wakeUp != nil {
-			t.wakeUp.mu.Lock()
-			fired := t.wakeUp.fired
-			t.wakeUp.fired = false
-			t.wakeUp.mu.Unlock()
-			if !fired {
-				break
-			}
+	status := IDLE
+
+	for status == IDLE || (opt == WhileRunning && status == RUNNING) {
+		status = root.ExecuteTick()
+
+		// Inner spin loop: non-blocking wake-up drain.
+		for opt != ExactlyOnce && status == RUNNING && t.wakeUp != nil && t.wakeUp.WaitFor(0) {
 			status = root.ExecuteTick()
-			if status.IsCompleted() {
+		}
+
+		if status.IsCompleted() {
+			if opt != ExactlyOnce {
 				root.ResetStatus()
 			}
 		}
-		return status
 
-	case WhileRunning:
-		status := root.ExecuteTick()
-		if status.IsCompleted() {
-			root.ResetStatus()
-		}
-		for status == RUNNING {
-			// Wait for wake-up signal or timeout
+		if status == RUNNING && sleepTime > 0 {
 			if t.wakeUp != nil {
 				t.wakeUp.WaitFor(sleepTime)
 			} else {
 				time.Sleep(sleepTime)
 			}
-			status = root.ExecuteTick()
-			if status.IsCompleted() {
-				root.ResetStatus()
-			}
 		}
-		return status
-
-	default:
-		return root.ExecuteTick()
 	}
+
+	return status
 }
 
 // HaltTree halts all nodes in the tree.
@@ -159,6 +160,18 @@ func (t *Tree) HaltTree() {
 		for _, node := range subtree.Nodes {
 			node.Halt()
 		}
+	}
+}
+
+// Stop cleanly shuts down the timer queue goroutine. After Stop, the tree
+// cannot be ticked again without re-initializing.
+func (t *Tree) Stop() {
+	if t.stopped {
+		return
+	}
+	t.stopped = true
+	if t.timerQueue != nil {
+		t.timerQueue.Stop()
 	}
 }
 
