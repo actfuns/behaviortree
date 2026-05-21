@@ -5,7 +5,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+	"unsafe"
 )
 
 // AnyPtrLocked holds a locked reference to a Blackboard entry's value.
@@ -86,6 +88,7 @@ func (e *BlackboardEntry) SetValue(val Any) {
 
 // Blackboard is the mechanism used to exchange typed data between nodes.
 type Blackboard struct {
+	mu                 sync.RWMutex
 	storage            map[string]*BlackboardEntry
 	parent             *Blackboard
 	internalToExternal map[string]string
@@ -103,11 +106,16 @@ func NewBlackboard(parent *Blackboard) *Blackboard {
 
 // EnableAutoRemapping enables automatic remapping to parent blackboard.
 func (bb *Blackboard) EnableAutoRemapping(remapping bool) {
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
 	bb.autoRemapping = remapping
 }
 
 // GetEntry returns the entry for a given key.
+// This method is NOT internally locked; callers of higher-level APIs
+// (Get, Set, HasKey, etc.) get locking from those methods.
 func (bb *Blackboard) GetEntry(key string) *BlackboardEntry {
+
 	// Special syntax: "@" refers to root BB
 	if len(key) > 0 && key[0] == '@' {
 		return bb.RootBlackboard().GetEntry(key[1:])
@@ -138,6 +146,8 @@ func isPrivateKey(key string) bool {
 
 // GetAnyLocked returns a locked reference to an entry's value.
 func (bb *Blackboard) GetAnyLocked(key string) *AnyPtrLocked {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	entry := bb.GetEntry(key)
 	if entry == nil {
 		return nil
@@ -147,6 +157,8 @@ func (bb *Blackboard) GetAnyLocked(key string) *AnyPtrLocked {
 
 // Get retrieves a value from the blackboard.
 func (bb *Blackboard) Get(key string, dest interface{}) (bool, error) {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	entry := bb.GetEntry(key)
 	if entry == nil {
 		return false, nil
@@ -174,6 +186,8 @@ func GetTyped[T any](bb *Blackboard, key string) (T, error) {
 
 // GetInto retrieves a value into an existing destination pointer.
 func (bb *Blackboard) GetInto(key string, dest interface{}) error {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	entry := bb.GetEntry(key)
 	if entry == nil {
 		return fmt.Errorf("Blackboard::get() error. Missing key [%s]", key)
@@ -188,6 +202,8 @@ func (bb *Blackboard) GetInto(key string, dest interface{}) error {
 
 // GetStamped retrieves a value with its timestamp.
 func (bb *Blackboard) GetStamped(key string, dest interface{}) (*Timestamp, error) {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	entry := bb.GetEntry(key)
 	if entry == nil {
 		return nil, fmt.Errorf("Blackboard::getStamped() error. Missing key [%s]", key)
@@ -209,10 +225,14 @@ func (bb *Blackboard) GetStamped(key string, dest interface{}) (*Timestamp, erro
 
 // Set stores a value in the blackboard.
 func (bb *Blackboard) Set(key string, value interface{}) error {
-	// Handle "@" prefix for root blackboard access
+	// Handle "@" prefix for root blackboard access — redirect BEFORE locking
+	// to avoid deadlock when root == self (re-entrant Lock).
 	if len(key) > 0 && key[0] == '@' {
 		return bb.RootBlackboard().Set(key[1:], value)
 	}
+
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
 
 	// Detect if value is already an Any (matches C++ set<BT::Any> special case)
 	var anyVal Any
@@ -311,17 +331,23 @@ func (bb *Blackboard) Set(key string, value interface{}) error {
 
 // Unset removes a key from the blackboard.
 func (bb *Blackboard) Unset(key string) {
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
 	delete(bb.storage, key)
 }
 
 // HasKey returns true if the key exists in the blackboard.
 // Matches C++: delegates to getEntry() to check parent/remapping chain.
 func (bb *Blackboard) HasKey(key string) bool {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	return bb.GetEntry(key) != nil
 }
 
 // GetKeys returns all keys in the blackboard.
 func (bb *Blackboard) GetKeys() []string {
+	bb.mu.RLock()
+	defer bb.mu.RUnlock()
 	keys := make([]string, 0, len(bb.storage))
 	for k := range bb.storage {
 		keys = append(keys, k)
@@ -331,11 +357,15 @@ func (bb *Blackboard) GetKeys() []string {
 
 // Clear removes all entries.
 func (bb *Blackboard) Clear() {
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
 	bb.storage = make(map[string]*BlackboardEntry)
 }
 
 // AddSubtreeRemapping adds a remapping from internal to external key.
 func (bb *Blackboard) AddSubtreeRemapping(internal, external string) {
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
 	bb.internalToExternal[internal] = external
 }
 
@@ -359,10 +389,12 @@ func (bb *Blackboard) CreateEntry(key string, info PortInfo) (*BlackboardEntry, 
 		if strings.ContainsRune(key[1:], '@') {
 			return nil, fmt.Errorf("Character '@' used multiple times in the key")
 		}
-		return bb.RootBlackboard().createEntryImpl(key[1:], info)
-	} else {
-		return bb.createEntryImpl(key, info)
+		return bb.RootBlackboard().CreateEntry(key[1:], info)
 	}
+
+	bb.mu.Lock()
+	defer bb.mu.Unlock()
+	return bb.createEntryImpl(key, info)
 }
 
 func (bb *Blackboard) createEntryImpl(key string, info PortInfo) (*BlackboardEntry, error) {
@@ -471,6 +503,18 @@ func stringConverterForKind(k reflect.Kind) StringConverter {
 	}
 }
 
+// Lock locks the blackboard mutex for writing.
+func (bb *Blackboard) Lock() { bb.mu.Lock() }
+
+// Unlock unlocks the blackboard mutex for writing.
+func (bb *Blackboard) Unlock() { bb.mu.Unlock() }
+
+// RLock locks the blackboard mutex for reading.
+func (bb *Blackboard) RLock() { bb.mu.RLock() }
+
+// RUnlock unlocks the blackboard mutex for reading.
+func (bb *Blackboard) RUnlock() { bb.mu.RUnlock() }
+
 // DebugMessage prints debug information about the blackboard.
 func (bb *Blackboard) DebugMessage() {
 	for key, entry := range bb.storage {
@@ -490,79 +534,46 @@ func (bb *Blackboard) DebugMessage() {
 // Known limitations: it doesn't update the remapping in dst, it doesn't change
 // the parent blackboard of dst.
 func (bb *Blackboard) CloneInto(dst *Blackboard) {
-	type copyTask struct {
-		key      string
-		srcEntry *BlackboardEntry
-		dstEntry *BlackboardEntry // nil when a new entry is needed
+	// Lock both mutexes in pointer order to prevent deadlock.
+	if bb == dst {
+		return
+	}
+	if uintptr(unsafe.Pointer(bb)) < uintptr(unsafe.Pointer(dst)) {
+		bb.mu.Lock()
+		dst.mu.Lock()
+	} else {
+		dst.mu.Lock()
+		bb.mu.Lock()
+	}
+	defer bb.mu.Unlock()
+	defer dst.mu.Unlock()
+
+	// Build set of dst keys
+	dstKeys := make(map[string]bool)
+	for key := range dst.storage {
+		dstKeys[key] = true
 	}
 
-	var tasks []copyTask
-	var keysToRemove []string
-
-	// Step 1: snapshot src/dst entries under both storage mutexes.
-	{
-
-		// Build set of dst keys
-		dstKeys := make(map[string]bool)
-		for key := range dst.storage {
-			dstKeys[key] = true
-		}
-
-		for srcKey, srcEntry := range bb.storage {
-			delete(dstKeys, srcKey)
-			if dstEntry, ok := dst.storage[srcKey]; ok {
-				tasks = append(tasks, copyTask{key: srcKey, srcEntry: srcEntry, dstEntry: dstEntry})
-			} else {
-				tasks = append(tasks, copyTask{key: srcKey, srcEntry: srcEntry, dstEntry: nil})
-			}
-		}
-
-		for key := range dstKeys {
-			keysToRemove = append(keysToRemove, key)
-		}
-
-	}
-	// storage mutexes released here
-
-	// Step 2: copy entry data under entry_mutex only.
-	type newEntry struct {
-		key   string
-		entry *BlackboardEntry
-	}
-	var newEntries []newEntry
-
-	for _, task := range tasks {
-		if task.dstEntry != nil {
-			// overwrite existing entry — lock both entry mutexes
-			val := task.srcEntry.value
-			info := task.srcEntry.info
-			conv := task.srcEntry.stringConv
-
-			task.dstEntry.value = val
-			task.dstEntry.info = info
-			task.dstEntry.stringConv = conv
-			task.dstEntry.sequenceID++
-			task.dstEntry.stamp = time.Now()
+	for srcKey, srcEntry := range bb.storage {
+		delete(dstKeys, srcKey)
+		if dstEntry, ok := dst.storage[srcKey]; ok {
+			// overwrite existing entry — under both storage mutexes
+			dstEntry.value = srcEntry.value
+			dstEntry.info = srcEntry.info
+			dstEntry.stringConv = srcEntry.stringConv
+			dstEntry.sequenceID++
+			dstEntry.stamp = time.Now()
 		} else {
-			// create new entry from src
-			newEnt := &BlackboardEntry{
-				value:      task.srcEntry.value,
-				info:       task.srcEntry.info,
-				stringConv: task.srcEntry.stringConv,
+			// create new entry
+			dst.storage[srcKey] = &BlackboardEntry{
+				value:      srcEntry.value,
+				info:       srcEntry.info,
+				stringConv: srcEntry.stringConv,
 			}
-			newEntries = append(newEntries, newEntry{key: task.key, entry: newEnt})
 		}
 	}
 
-	// Step 3: insert new entries and remove stale ones under dst storage mutex.
-	if len(newEntries) > 0 || len(keysToRemove) > 0 {
-		for _, ne := range newEntries {
-			if _, exists := dst.storage[ne.key]; !exists {
-				dst.storage[ne.key] = ne.entry
-			}
-		}
-		for _, key := range keysToRemove {
-			delete(dst.storage, key)
-		}
+	for key := range dstKeys {
+		delete(dst.storage, key)
 	}
 }

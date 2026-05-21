@@ -73,10 +73,12 @@ func TestBlackboardThreadSafety_SetNewEntryWhileReading(t *testing.T) {
 		defer wg.Done()
 		for i := 0; i < iterations; i++ {
 			key := "key_" + string(rune('0'+i%5))
+			bb.RLock()
 			entry := bb.GetEntry(key)
 			if entry != nil {
 				_ = entry.SequenceID()
 			}
+			bb.RUnlock()
 		}
 	}()
 
@@ -161,10 +163,12 @@ func TestBlackboardThreadSafety_CloneIntoWhileReading(t *testing.T) {
 		defer wg.Done()
 		for i := 0; i < iterations; i++ {
 			key := "key_" + string(rune('0'+i%numEntries))
+			dst.RLock()
 			entry := dst.GetEntry(key)
 			if entry != nil {
 				_ = entry.SequenceID()
 			}
+			dst.RUnlock()
 		}
 	}()
 
