@@ -1,63 +1,69 @@
 package core
 
-import (
-	"sync"
-	"time"
-)
+import "time"
 
 // WakeUpSignal provides a way to signal a waiting tree to tick again.
-// It mirrors C++ BT::WakeUpSignal.
+// Mirrors C++ BT::WakeUpSignal.
+//
+// Uses a buffered channel so Emit is non-blocking and WaitFor can use
+// a simple select without creating background goroutines.
 type WakeUpSignal struct {
-	mu       sync.Mutex
-	fired    bool
-	signalCh chan struct{}
+	signal chan struct{}
 }
 
 // NewWakeUpSignal creates a new WakeUpSignal.
 func NewWakeUpSignal() *WakeUpSignal {
 	return &WakeUpSignal{
-		signalCh: make(chan struct{}, 1),
+		signal: make(chan struct{}, 1),
 	}
 }
 
 // Emit signals that the tree should be ticked again.
+// Non-blocking: if a signal is already pending, this is a no-op.
 func (w *WakeUpSignal) Emit() {
-	w.mu.Lock()
-	w.fired = true
-	w.mu.Unlock()
-
 	select {
-	case w.signalCh <- struct{}{}:
+	case w.signal <- struct{}{}:
 	default:
 	}
 }
 
 // WaitFor waits for a signal with a timeout.
-// Returns true if the signal was received, false on timeout.
+// If timeout <= 0, this is a non-blocking poll: returns true if a signal
+// was pending (and consumes it), false otherwise.
+// If timeout > 0, blocks until either a signal arrives (returns true) or
+// the timeout elapses (returns false).
 func (w *WakeUpSignal) WaitFor(timeout time.Duration) bool {
-	w.mu.Lock()
-	if w.fired {
-		w.fired = false
-		w.mu.Unlock()
-		return true
+	if timeout <= 0 {
+		select {
+		case <-w.signal:
+			return true
+		default:
+			return false
+		}
 	}
-	w.mu.Unlock()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 
 	select {
-	case <-w.signalCh:
-		w.mu.Lock()
-		fired := w.fired
-		w.fired = false
-		w.mu.Unlock()
-		return fired
-	case <-time.After(timeout):
-		return false
+	case <-w.signal:
+		return true
+	case <-timer.C:
+		// Timer fired first, but a signal may have arrived just before.
+		// Check one more time to avoid losing it.
+		select {
+		case <-w.signal:
+			return true
+		default:
+			return false
+		}
 	}
 }
 
-// Reset clears the fired flag.
+// Reset clears any pending signal.
 func (w *WakeUpSignal) Reset() {
-	w.mu.Lock()
-	w.fired = false
-	w.mu.Unlock()
+	select {
+	case <-w.signal:
+	default:
+	}
 }
