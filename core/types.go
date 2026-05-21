@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // NodeType enumerates the possible types of nodes.
@@ -574,6 +575,11 @@ func GetRemappedKey(portName, remappedPort string) (string, bool) {
 		return key, true
 	}
 	return "", false
+}
+
+// DurationFromMS converts milliseconds to time.Duration.
+func DurationFromMS(ms int) time.Duration {
+	return time.Duration(ms) * time.Millisecond
 }
 
 // NodeBuilder creates a new TreeNode instance.
