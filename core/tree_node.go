@@ -76,6 +76,9 @@ type TreeNode interface {
 	// SetWakeUpInstance sets the wake-up signal instance.
 	SetWakeUpInstance(wakeUp *WakeUpSignal)
 
+	// SetTimerQueueInstance sets the timer queue instance for this node.
+	SetTimerQueueInstance(tq *TimerQueue)
+
 	// WaitValidStatus blocks until the node is not halted, returns status.
 	WaitValidStatus() NodeStatus
 
@@ -84,6 +87,9 @@ type TreeNode interface {
 
 	// SetSelf sets the self-reference to the outermost embedding struct.
 	SetSelf(self TreeNode)
+
+	// TimerQueue returns the timer queue instance for scheduling delayed callbacks.
+	TimerQueue() *TimerQueue
 }
 
 // StatusChangeCallback is a function called when a node's status changes.
@@ -138,6 +144,7 @@ type treeNodeBase struct {
 	callbackInjectionMu sync.Mutex
 
 	wakeUp      *WakeUpSignal
+	timerQueue  *TimerQueue
 	preScripts  PreScripts
 	postScripts PostScripts
 }
@@ -502,6 +509,20 @@ func (b *treeNodeBase) SetRegistrationID(id string) {
 // SetWakeUpInstance sets the wake-up signal instance.
 func (b *treeNodeBase) SetWakeUpInstance(wakeUp *WakeUpSignal) {
 	b.wakeUp = wakeUp
+}
+
+// SetTimerQueueInstance sets the timer queue instance for scheduling delayed callbacks.
+func (b *treeNodeBase) SetTimerQueueInstance(tq *TimerQueue) {
+	b.timerQueue = tq
+}
+
+// TimerQueue returns the TimerQueue instance for scheduling delayed callbacks.
+// Falls back to a global default if no tree-specific instance was set.
+func (b *treeNodeBase) TimerQueue() *TimerQueue {
+	if b.timerQueue != nil {
+		return b.timerQueue
+	}
+	return defaultTimerQueue
 }
 
 // SetFullPath sets the full path.
