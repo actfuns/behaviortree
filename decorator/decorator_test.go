@@ -99,7 +99,7 @@ func TestDeadlineTriggered(t *testing.T) {
 // deadline, TimeoutNode returns SUCCESS.
 func TestDeadlineNotTriggered(t *testing.T) {
 	cfg := core.NewNodeConfig()
-	cfg.InputPorts["msec"] = "10"
+	cfg.InputPorts["msec"] = "100"
 	timeout := decorator.NewTimeoutNode("deadline", cfg)
 
 	actionCfg := core.NewNodeConfig()
@@ -114,7 +114,7 @@ func TestDeadlineNotTriggered(t *testing.T) {
 		t.Fatalf("first tick: want RUNNING, got %v", state)
 	}
 
-	// Wait for the async action to complete
+	// Wait for the async action to complete (it has 1ms delay, well within 100ms timeout)
 	time.Sleep(15 * time.Millisecond)
 
 	state = timeout.ExecuteTick()

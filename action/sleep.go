@@ -2,17 +2,20 @@ package action
 
 import (
 	"log/slog"
-	"time"
+	"sync"
 
 	"github.com/actfuns/behaviortree/core"
 )
 
 // SleepNode sleeps for a specified amount of time (msec port).
+// Uses a background timer that emits a wake-up signal when the time expires,
+// matching C++ BehaviorTree.CPP behavior.
 type SleepNode struct {
 	core.StatefulActionNode
 	msec         int
-	startTime    time.Time
 	timerWaiting bool
+	timerID      core.TimerID
+	mu           sync.Mutex
 }
 
 func NewSleepNode(name string, config core.NodeConfig) *SleepNode {
@@ -34,29 +37,46 @@ func (n *SleepNode) OnStart() core.NodeStatus {
 		return core.SUCCESS
 	}
 
-	n.startTime = time.Now()
 	n.msec = msec
+	n.mu.Lock()
 	n.timerWaiting = true
+	n.mu.Unlock()
 	n.SetStatus(core.RUNNING)
+
+	n.timerID = n.TimerQueue().Add(
+		core.DurationFromMS(msec),
+		func(aborted bool) {
+			n.mu.Lock()
+			n.timerWaiting = false
+			n.mu.Unlock()
+			if !aborted {
+				n.EmitWakeUpSignal()
+			}
+		},
+	)
+
 	return core.RUNNING
 }
 
 func (n *SleepNode) OnRunning() core.NodeStatus {
-	if time.Since(n.startTime) < time.Duration(n.msec)*time.Millisecond {
+	n.mu.Lock()
+	waiting := n.timerWaiting
+	n.mu.Unlock()
+
+	if waiting {
 		return core.RUNNING
 	}
-	n.timerWaiting = false
-	n.EmitWakeUpSignal()
 	return core.SUCCESS
 }
 
 func (n *SleepNode) OnHalted() {
+	n.TimerQueue().Cancel(n.timerID)
+	n.mu.Lock()
 	n.timerWaiting = false
+	n.mu.Unlock()
 }
 
 // Tick dispatches to OnStart or OnRunning based on the current status.
-// This is necessary because Go's static dispatch prevents StatefulActionNode.Tick()
-// from calling the overridden OnStart/OnRunning on the embedding struct.
 func (n *SleepNode) Tick() core.NodeStatus {
 	prevStatus := n.Status()
 	if prevStatus == core.IDLE {
